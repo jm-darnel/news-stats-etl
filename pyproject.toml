@@ -1,0 +1,36 @@
+[project]
+name = "newsstats"
+version = "0.1.0"
+description = "News ETL -> DuckDB/MotherDuck warehouse -> static dashboard + chatbot (JMD-79)"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "duckdb>=1.1.0",
+    "trafilatura>=2.0.0",
+    "requests>=2.32.0",
+    "pyyaml>=6.0.0",
+    "feedparser>=6.0.0",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0.0",
+    "ruff>=0.6.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/newsstats"]
+
+[tool.ruff]
+line-length = 110
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "W", "UP", "B"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

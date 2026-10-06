@@ -1,0 +1,143 @@
+# Frozen source registry. THE ONLY place per-outlet config lives.
+# There is no per-source transform code; these are inputs to one generic pipeline.
+# Fields (all required unless noted):
+#   outlet_id   short stable slug used as FK and filter key
+#   name        display name
+#   domain      bare domain (used for feed/politeness and GDELT domain queries)
+#   discovery   rss | sitemap
+#   feed_url    RSS/Atom URL (discovery=rss) OR Google News sitemap URL (discovery=sitemap)
+#   notes       free-form extraction hints (kept human-readable)
+#   category_map  OPTIONAL dict of URL-path prefix -> normalized category
+outlets:
+  - outlet_id: cnn
+    name: CNN
+    domain: cnn.com
+    discovery: sitemap
+    feed_url: https://www.cnn.com/sitemap/news.xml
+    notes: no native RSS (dead since 2024); author via JSON-LD on some articles
+  - outlet_id: nbc
+    name: NBC News
+    domain: nbcnews.com
+    discovery: rss
+    feed_url: https://nbcnews.com/feed
+    notes: author + category present
+  - outlet_id: cbs
+    name: CBS News
+    domain: cbsnews.com
+    discovery: rss
+    feed_url: https://www.cbsnews.com/latest/rss/main
+    notes: author present
+  - outlet_id: bbc
+    name: BBC
+    domain: bbc.com
+    discovery: rss
+    feed_url: https://feeds.bbci.co.uk/news/rss.xml
+    notes: author present; category not exposed
+  - outlet_id: fox
+    name: Fox News
+    domain: foxnews.com
+    discovery: rss
+    feed_url: https://moxie.foxnews.com/google-publisher/latest.xml
+    notes: author via dc.creator meta; no JSON-LD; no category
+  - outlet_id: nypost
+    name: New York Post
+    domain: nypost.com
+    discovery: rss
+    feed_url: https://nypost.com/feed
+    notes: author present; high volume
+  - outlet_id: washexaminer
+    name: Washington Examiner
+    domain: washingtonexaminer.com
+    discovery: rss
+    feed_url: https://washingtonexaminer.com/feed
+    notes: author + category present
+  - outlet_id: nationalreview
+    name: National Review
+    domain: nationalreview.com
+    discovery: rss
+    feed_url: https://nationalreview.com/feed
+    notes: author present
+  - outlet_id: dailymail
+    name: Daily Mail
+    domain: dailymail.co.uk
+    discovery: rss
+    feed_url: https://www.dailymail.co.uk/articles.rss
+    notes: feed links need whitespace trimming; very high volume; author present
+  - outlet_id: thesun
+    name: The Sun
+    domain: thesun.co.uk
+    discovery: rss
+    feed_url: https://www.thesun.co.uk/feed/
+    notes: author present; high volume
+  - outlet_id: independent
+    name: The Independent
+    domain: independent.co.uk
+    discovery: rss
+    feed_url: https://www.independent.co.uk/news/rss
+    notes: feed is gzip-encoded; author + category present
+  - outlet_id: guardian
+    name: The Guardian
+    domain: theguardian.com
+    discovery: rss
+    feed_url: https://theguardian.com/rss
+    notes: author + category present; clean full bodies
+  - outlet_id: vox
+    name: Vox
+    domain: vox.com
+    discovery: rss
+    feed_url: https://vox.com/rss/index.xml
+    notes: author + category present
+  - outlet_id: slate
+    name: Slate
+    domain: slate.com
+    discovery: rss
+    feed_url: https://slate.com/feeds/all.rss
+    notes: author + category present
+  - outlet_id: motherjones
+    name: Mother Jones
+    domain: motherjones.com
+    discovery: rss
+    feed_url: https://motherjones.com/feed
+    notes: author + category present
+  - outlet_id: intercept
+    name: The Intercept
+    domain: theintercept.com
+    discovery: rss
+    feed_url: https://theintercept.com/feed
+    notes: author + category present
+  - outlet_id: propublica
+    name: ProPublica
+    domain: propublica.org
+    discovery: rss
+    feed_url: https://propublica.org/feed
+    notes: author present; long-form (great for length metrics)
+  - outlet_id: latimes
+    name: LA Times
+    domain: latimes.com
+    discovery: rss
+    feed_url: https://www.latimes.com/index.rss
+    notes: author via JSON-LD; articleBody present in JSON-LD (word count ok); metered
+  - outlet_id: time
+    name: Time
+    domain: time.com
+    discovery: rss
+    feed_url: https://time.com/feed
+    notes: author present; category not exposed (URL-path fallback)
+  - outlet_id: wired
+    name: Wired
+    domain: wired.com
+    discovery: rss
+    feed_url: https://wired.com/feed
+    notes: author present; articleBody present; metered
+  - outlet_id: arstechnica
+    name: Ars Technica
+    domain: arstechnica.com
+    discovery: rss
+    feed_url: https://arstechnica.com/feed
+    notes: author present; category not exposed
+  - outlet_id: theverge
+    name: The Verge
+    domain: theverge.com
+    discovery: rss
+    feed_url: https://theverge.com/rss.xml
+    notes: author + category present
