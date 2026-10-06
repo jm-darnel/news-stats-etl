@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import os
 import uuid
 from datetime import UTC, datetime
 
@@ -43,7 +44,8 @@ def main() -> None:
             f"{r.outlet_id:14} wc={r.word_count:>6} conf={r.extraction_confidence:.2f} "
             f"cat={cat:14} authors={r.authors} title={r.title!r}"
         )
-    print(f"\n{len(rows)} rows ingested (run {run_id[:8]}) into {args.db or load.DEFAULT_DB}")
+    target = args.db or os.environ.get("NEWSSTATS_DB_URL", load.DEFAULT_DB)
+    print(f"\n{len(rows)} rows ingested (run {run_id[:8]}) into {target}")
 
 
 if __name__ == "__main__":

@@ -33,3 +33,19 @@ python etl.py --source slate --limit 1
 
 Set `NEWSSTATS_DB_URL` to point at MotherDuck (`md:newsstats?motherduck_token=...`)
 or a local DuckDB file (default `data/warehouse.duckdb`).
+
+## MotherDuck (hosted DuckDB)
+
+The public dashboard/chatbot read from MotherDuck, not the local file (Vercel and
+GitHub Actions cannot reach a local file). Same DuckDB engine, one account.
+
+- Token lives in `.env` (gitignored) as `motherduck_token=...`; `NEWSSTATS_DB_URL=md:newsstats`.
+- The `motherduck` extension auto-installs on first `md:` connection (duckdb 1.4.1-1.5.6 supported).
+- Free Lite tier: 10 GB storage + 10 compute-hours/month. Run the heavy backfill on local
+  DuckDB and keep MotherDuck as the light serving layer.
+- Claim ownership of the account via the `claim_org_url` from signup.
+
+```bash
+set -a; . ./.env; set +a
+python etl.py --source slate --limit 1   # now writes to md:newsstats
+```
