@@ -55,6 +55,7 @@ class SourceConfig:
     feed_url: str
     notes: str = ""
     category_map: dict = field(default_factory=dict)
+    skip_path_prefixes: list[str] = field(default_factory=list)
 
 
 @dataclass(frozen=True)

@@ -9,7 +9,7 @@ Upserts are idempotent: content-hash primary keys + ON CONFLICT.
 from __future__ import annotations
 
 import os
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 
 import duckdb
@@ -33,19 +33,30 @@ def init_schema(conn) -> None:
 
 
 def _to_ts(value):
-    if value is None or isinstance(value, datetime):
-        return value
-    s = str(value).strip().replace("Z", "+00:00")
-    try:
-        return datetime.fromisoformat(s)
-    except ValueError:
-        pass
-    for fmt in ("%Y-%m-%d %H:%M:%S", "%Y-%m-%d %H:%M", "%Y-%m-%d"):
+    """Parse to a naive UTC datetime. DuckDB TIMESTAMP is naive, and inserting a
+    tz-aware datetime silently converts to the session's local zone (shifting the
+    date), so we normalize to UTC wall-clock and drop the offset before storing."""
+    if value is None:
+        return None
+    if isinstance(value, datetime):
+        dt = value
+    else:
+        s = str(value).strip().replace("Z", "+00:00")
+        dt = None
         try:
-            return datetime.strptime(s, fmt)
+            dt = datetime.fromisoformat(s)
         except ValueError:
-            continue
-    return None
+            for fmt in ("%Y-%m-%d %H:%M:%S", "%Y-%m-%d %H:%M", "%Y-%m-%d"):
+                try:
+                    dt = datetime.strptime(s, fmt)
+                    break
+                except ValueError:
+                    continue
+        if dt is None:
+            return None
+    if dt.tzinfo is not None:
+        dt = dt.astimezone(UTC).replace(tzinfo=None)
+    return dt
 
 
 def upsert(conn, source: SourceConfig, rows: list[CanonicalArticle], run_id: str, started_at: str) -> int:

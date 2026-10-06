@@ -1,0 +1,22 @@
+name: etl
+
+on:
+  schedule:
+    - cron: "0 */6 * * *"   # every 6 hours
+  workflow_dispatch: {}      # manual run from the Actions tab
+
+jobs:
+  etl:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install
+        run: pip install .
+      - name: Run forward ETL
+        env:
+          NEWSSTATS_DB_URL: md:newsstats
+          motherduck_token: ${{ secrets.MOTHERDUCK_TOKEN }}
+        run: python etl.py

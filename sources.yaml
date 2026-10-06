@@ -14,7 +14,9 @@ outlets:
     domain: cnn.com
     discovery: sitemap
     feed_url: https://www.cnn.com/sitemap/news.xml
-    notes: no native RSS (dead since 2024); author via JSON-LD on some articles
+    skip_path_prefixes:
+      - /cnn-underscored/
+    notes: no native RSS (dead since 2024); author via JSON-LD on some articles; cnn-underscored (commerce) 403s and is skipped
   - outlet_id: nbc
     name: NBC News
     domain: nbcnews.com

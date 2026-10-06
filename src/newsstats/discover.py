@@ -21,9 +21,11 @@ _EXCLUDE_PATH = re.compile(
 )
 
 
-def _looks_like_article(url: str) -> bool:
+def _looks_like_article(url: str, skip_prefixes: tuple = ()) -> bool:
     path = urlparse(url).path
-    return len(path.strip("/")) > 6 and not _EXCLUDE_PATH.search(path)
+    if len(path.strip("/")) <= 6 or _EXCLUDE_PATH.search(path):
+        return False
+    return not any(path.startswith(p) for p in skip_prefixes)
 
 
 def _entry_date(entry) -> str | None:
@@ -50,7 +52,7 @@ def _from_feed(source: SourceConfig, body: str, limit: int | None) -> list[Disco
     out: list[DiscoveredArticle] = []
     for e in parsed.entries:
         link = (e.get("link") or "").strip()
-        if not link or not _looks_like_article(link):
+        if not link or not _looks_like_article(link, tuple(source.skip_path_prefixes)):
             continue
         out.append(
             DiscoveredArticle(
@@ -80,7 +82,7 @@ def _from_sitemap(source: SourceConfig, body: str, limit: int | None) -> list[Di
         if not m:
             continue
         link = m.group(1).strip()
-        if not _looks_like_article(link):
+        if not _looks_like_article(link, tuple(source.skip_path_prefixes)):
             continue
         pub = _PUB.search(block)
         out.append(

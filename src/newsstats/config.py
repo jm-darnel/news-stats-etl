@@ -37,6 +37,7 @@ def load_sources(path: str | Path = _DEFAULT_PATH) -> list[SourceConfig]:
                 feed_url=raw["feed_url"],
                 notes=raw.get("notes", ""),
                 category_map=raw.get("category_map", {}) or {},
+                skip_path_prefixes=raw.get("skip_path_prefixes") or [],
             )
         )
     return configs
