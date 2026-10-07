@@ -1,29 +1,30 @@
 """GDELT GKG backfill CLI.
 
 Usage:
-  python backfill.py --slice 96          # validate: 1 day of files
-  python backfill.py                      # full 5-year run (resumable)
-  python backfill.py --start 2021-10-01 --max-mbps 50
+  python backfill.py --slice 96             # validate: 1 day of files
+  python backfill.py --workers 8            # full 5-year run (resumable)
+  python backfill.py --start 2021-10-01 --max-mbps 200
 
 Streams GDELT 15-min GKG files, keeps the 22 source domains, and appends
 per-article (url, date, word count, author, title) to a local DuckDB file.
-Tracks completed timestamps so the run resumes where it left off.
+Download + parse run in worker processes (embarrassingly parallel); DuckDB
+has a single writer in the parent. Tracks completed timestamps so the run
+resumes where it left off.
 """
 
 from __future__ import annotations
 
 import argparse
-import csv
-import io
+import itertools
+import os
 import sys
 import time
-import zipfile
+from concurrent.futures import ProcessPoolExecutor, as_completed
 from datetime import datetime, timedelta
-from urllib import request
 
 import duckdb
 
-from newsstats.backfill import GKG_BASE, gkg_timestamps, parse_row
+from newsstats.backfill import GKG_BASE, gkg_timestamps, process_gkg_file
 from newsstats.config import load_sources
 
 _DDL = """
@@ -50,90 +51,69 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'gdelt', 'gdelt_backfill')
 """
 
 
-def _fetch(url: str, retries: int = 3) -> bytes:
-    last_exc: Exception | None = None
-    for attempt in range(retries):
-        try:
-            req = request.Request(url, headers={"User-Agent": "news-stats-etl/0.1 (portfolio)"})
-            with request.urlopen(req, timeout=120) as resp:
-                return resp.read()
-        except Exception as e:  # noqa: BLE001
-            last_exc = e
-            time.sleep(2 * (attempt + 1))
-    raise RuntimeError(f"failed after {retries} attempts") from last_exc
-
-
-def _iter_rows(data: bytes):
-    with zipfile.ZipFile(io.BytesIO(data)) as z:
-        name = z.namelist()[0]
-        with z.open(name) as f:
-            reader = csv.reader(io.TextIOWrapper(f, encoding="utf-8", errors="replace"),
-                                delimiter="\t")
-            yield from reader
-
-
-def _throttle(n_bytes: int, max_mbps: float, t0: float) -> None:
-    target = n_bytes / (max_mbps * 1e6 / 8)
-    elapsed = time.time() - t0
-    if elapsed < target:
-        time.sleep(target - elapsed)
-
-
 def main() -> None:
     ap = argparse.ArgumentParser(description="GDELT GKG 5-year backfill")
     ap.add_argument("--start", default="2021-10-01")
     ap.add_argument("--end", default=None)
     ap.add_argument("--db", default="data/gdelt_backfill.duckdb")
     ap.add_argument("--slice", type=int, default=0, help="process only the first N files")
-    ap.add_argument("--max-mbps", type=float, default=50.0, help="download throttle")
-    ap.add_argument("--log-every", type=int, default=96, help="print progress every N files")
+    ap.add_argument("--workers", type=int, default=max(1, os.cpu_count() or 4))
+    ap.add_argument("--max-mbps", type=float, default=200.0, help="aggregate download throttle")
+    ap.add_argument("--log-every", type=int, default=192, help="print progress every N files")
     args = ap.parse_args()
 
     domain_map = {s.domain: s.outlet_id for s in load_sources()}
     start = datetime.strptime(args.start, "%Y-%m-%d")
     end = datetime.strptime(args.end, "%Y-%m-%d") if args.end else datetime.now()
     if args.end is None:
-        end = end + timedelta(days=1)  # inclusive of today
+        end = end + timedelta(days=1)
     stamps = gkg_timestamps(start, end)
     if args.slice:
         stamps = stamps[: args.slice]
-    print(f"outlets={len(domain_map)}  files={len(stamps)}  "
-          f"window={start.date()}..{end.date()}")
 
     conn = duckdb.connect(args.db)
     conn.execute(_DDL)
     done = {r[0] for r in conn.execute("SELECT ts FROM gdelt_files_done").fetchall()}
     todo = [s for s in stamps if s not in done]
+    print(f"outlets={len(domain_map)}  files={len(stamps)}  "
+          f"window={start.date()}..{end.date()}  workers={args.workers}")
     print(f"resuming: {len(done)} done, {len(todo)} to process")
 
+    per_worker_mbps = args.max_mbps / args.workers if args.max_mbps else None
     kept = 0
     processed = 0
-    try:
-        for i, ts in enumerate(todo):
-            t0 = time.time()
-            data = _fetch(f"{GKG_BASE}/{ts}.gkg.csv.zip")
-            _throttle(len(data), args.max_mbps, t0)
+    failed = 0
+    t_start = time.time()
 
-            batch = []
-            for row in _iter_rows(data):
-                rec = parse_row(row, domain_map)
-                if rec is not None:
-                    batch.append((rec.article_id, rec.outlet_id, rec.domain, rec.url,
-                                  rec.title, rec.published_at, rec.word_count, rec.author))
-            if batch:
-                conn.executemany(_SQL_INSERT, batch)
-                kept += len(batch)
-            conn.execute("INSERT OR IGNORE INTO gdelt_files_done VALUES (?)", [ts])
-            processed += 1
+    it = iter(todo)
+    with ProcessPoolExecutor(max_workers=args.workers) as ex:
+        while True:
+            batch = list(itertools.islice(it, args.workers * 4))
+            if not batch:
+                break
+            futs = {ex.submit(process_gkg_file, ts, domain_map, GKG_BASE,
+                              per_worker_mbps): ts for ts in batch}
+            for fut in as_completed(futs):
+                ts = futs[fut]
+                try:
+                    rows = fut.result()
+                except Exception as e:  # noqa: BLE001
+                    failed += 1
+                    print(f"  FAILED {ts}: {e}", flush=True)
+                    continue  # leave un-done so a later run retries it
+                if rows:
+                    conn.executemany(_SQL_INSERT, rows)
+                    kept += len(rows)
+                conn.execute("INSERT OR IGNORE INTO gdelt_files_done VALUES (?)", [ts])
+                processed += 1
+            conn.commit()
+            rate = processed / max(1, time.time() - t_start)
+            print(f"  {processed}/{len(todo)} files  kept={kept}  failed={failed}  "
+                  f"~{rate:.1f} files/s", flush=True)
 
-            if (i + 1) % args.log_every == 0:
-                conn.commit()
-                print(f"  {i + 1}/{len(todo)} files  kept={kept}  "
-                      f"last={ts}  elapsed={time.time() - t0:.1f}s", flush=True)
-    finally:
-        conn.commit()
+    conn.commit()
     conn.close()
-    print(f"done. processed={processed} files, kept={kept} rows -> {args.db}")
+    print(f"done. files={processed} kept={kept} rows failed={failed} -> {args.db}")
 
 
 if __name__ == "__main__":

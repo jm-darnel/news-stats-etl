@@ -13,9 +13,14 @@ Design constraints:
 
 from __future__ import annotations
 
+import csv
+import io
 import re
+import time
+import zipfile
 from dataclasses import dataclass
 from datetime import datetime, timedelta
+from urllib import request
 
 from .models import article_id_for
 
@@ -107,3 +112,53 @@ def parse_row(row: list[str], domain_map: dict[str, str]) -> GkgRecord | None:
         word_count=word_count,
         author=author,
     )
+
+
+def fetch_file(url: str, retries: int = 3) -> bytes:
+    last_exc: Exception | None = None
+    for attempt in range(retries):
+        try:
+            req = request.Request(url, headers={"User-Agent": "news-stats-etl/0.1 (portfolio)"})
+            with request.urlopen(req, timeout=120) as resp:
+                return resp.read()
+        except Exception as e:  # noqa: BLE001
+            last_exc = e
+            time.sleep(2 * (attempt + 1))
+    raise RuntimeError(f"failed after {retries} attempts") from last_exc
+
+
+def iter_rows(data: bytes):
+    with zipfile.ZipFile(io.BytesIO(data)) as z:
+        name = z.namelist()[0]
+        with z.open(name) as f:
+            reader = csv.reader(io.TextIOWrapper(f, encoding="utf-8", errors="replace"),
+                                delimiter="\t")
+            yield from reader
+
+
+def throttle(n_bytes: int, max_mbps: float, t0: float) -> None:
+    target = n_bytes / (max_mbps * 1e6 / 8)
+    elapsed = time.time() - t0
+    if elapsed < target:
+        time.sleep(target - elapsed)
+
+
+# Row tuple matching the CLI's INSERT column order.
+def process_gkg_file(ts: str, domain_map: dict[str, str],
+                     base: str = GKG_BASE, per_worker_mbps: float | None = None) -> list[tuple]:
+    """Download, decompress, parse, and filter one 15-min GKG file.
+
+    Runs in a worker process; returns only matching rows as tuples (no DB here,
+    so DuckDB keeps a single writer in the parent).
+    """
+    t0 = time.time()
+    data = fetch_file(f"{base}/{ts}.gkg.csv.zip")
+    if per_worker_mbps:
+        throttle(len(data), per_worker_mbps, t0)
+    out: list[tuple] = []
+    for row in iter_rows(data):
+        rec = parse_row(row, domain_map)
+        if rec is not None:
+            out.append((rec.article_id, rec.outlet_id, rec.domain, rec.url,
+                        rec.title, rec.published_at, rec.word_count, rec.author))
+    return out
