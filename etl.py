@@ -11,7 +11,7 @@ import os
 import uuid
 from datetime import UTC, datetime
 
-from newsstats import discover, dq, extract, fetch, load, normalize
+from newsstats import discover, dq, extract, fetch, load, metrics, normalize
 from newsstats.config import get_source, load_sources
 
 
@@ -53,12 +53,18 @@ def main() -> None:
     ap.add_argument("--limit", type=int, default=None, help="cap articles per source")
     ap.add_argument("--db", default=None, help="DuckDB path or MotherDuck md: URL")
     ap.add_argument("--dry-run", action="store_true")
+    ap.add_argument("--build-marts", action="store_true", help="build marts only (no ingest)")
     args = ap.parse_args()
 
-    sources = load_sources() if args.source in (None, "all") else [get_source(args.source)]
     conn = load.connect(args.db)
     load.init_schema(conn)
 
+    if args.build_marts:
+        n = metrics.build_marts(conn)
+        print(f"built {n} mart views")
+        return
+
+    sources = load_sources() if args.source in (None, "all") else [get_source(args.source)]
     total = 0
     for source in sources:
         print(f"{source.outlet_id} ({source.discovery})")
@@ -66,6 +72,10 @@ def main() -> None:
             total += run_source(conn, source, args.limit, args.dry_run)
         except Exception as e:  # noqa: BLE001
             print(f"  FAIL {source.outlet_id}: {type(e).__name__}: {e}")
+
+    if not args.dry_run and args.source in (None, "all"):
+        n = metrics.build_marts(conn)
+        print(f"built {n} mart views")
 
     target = args.db or os.environ.get("NEWSSTATS_DB_URL", load.DEFAULT_DB)
     print(f"\n{total} rows across {len(sources)} source(s) -> {target}")

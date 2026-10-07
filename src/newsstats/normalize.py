@@ -5,6 +5,7 @@ from __future__ import annotations
 import re
 from urllib.parse import urlsplit
 
+from newsstats.category import normalize_category
 from newsstats.models import (
     COMPLETENESS_FULL,
     CanonicalArticle,
@@ -23,6 +24,8 @@ _NON_PERSON = {
     "the independent", "the guardian", "guardian staff", "agencies", "news team",
     "washington post", "new york post", "nbc news", "cbs news", "abc news",
     "bloomberg", "staff writers", "correspondent", "guest", "anonymous",
+    "today", "today show", "wire service", "news desk", "editorial staff",
+    "guardian staff reporter", "staff reporter", "senior reporter", "news reporter",
 }
 
 _ROLE_PREFIXES = ("news editor", "editor", "senior", "staff writer", "contributing")
@@ -70,7 +73,7 @@ def to_canonical(
     source: SourceConfig,
     seen_at: str,
 ) -> CanonicalArticle:
-    category = (
+    category = normalize_category(
         extracted.category
         or discovered.category
         or _category_from_url(discovered.url, source.category_map)
