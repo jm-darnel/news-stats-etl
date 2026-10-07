@@ -1,0 +1,109 @@
+"""GDELT GKG historical backfill.
+
+Stream GDELT's 15-minute Global Knowledge Graph files (free, back to Feb 2015),
+keep only records whose source domain is one of our registered outlets, and
+extract per-article (url, publish date, word count, author, title). The GKG
+carries everything the backfill needs, so no CC-NEWS / WARC processing.
+
+Design constraints:
+- Resumable: the caller tracks which file timestamps are done; ids are stable.
+- Throttlable: the caller paces downloads (politeness + home bandwidth).
+- Local: heavy compute stays in a local DuckDB file; MotherDuck gets aggregates.
+"""
+
+from __future__ import annotations
+
+import re
+from dataclasses import dataclass
+from datetime import datetime, timedelta
+
+from .models import article_id_for
+
+GKG_BASE = "https://data.gdeltproject.org/gdeltv2"
+
+_WC = re.compile(r"(?:^|,)wc:(\d+)")
+_AUTHORS = re.compile(r"<PAGE_AUTHORS>(.*?)</PAGE_AUTHORS>", re.S)
+_PUBLISHED = re.compile(r"<PAGE_PRECISEPUBTIMESTAMP>(\d+)</PAGE_PRECISEPUBTIMESTAMP>")
+_TITLE = re.compile(r"<PAGE_TITLE>(.*?)</PAGE_TITLE>", re.S)
+
+# GKG is 27 tab-separated columns; indexes for the fields we keep.
+_COL_DATE = 1
+_COL_DOMAIN = 3
+_COL_URL = 4
+_COL_COUNTS = 17
+_COL_EXTRAS = 26
+
+
+def gkg_timestamps(start: datetime, end: datetime) -> list[str]:
+    """15-minute YYYYMMDDHHMMSS timestamps in [start, end)."""
+    out: list[str] = []
+    cur = start.replace(minute=start.minute - start.minute % 15, second=0, microsecond=0)
+    while cur < end:
+        out.append(cur.strftime("%Y%m%d%H%M%S"))
+        cur += timedelta(minutes=15)
+    return out
+
+
+@dataclass
+class GkgRecord:
+    outlet_id: str
+    domain: str
+    url: str
+    article_id: str
+    title: str | None
+    published_at: str | None  # ISO "YYYY-MM-DD HH:MM:SS"
+    word_count: int | None
+    author: str | None
+
+
+def match_outlet(domain: str, domain_map: dict[str, str]) -> str | None:
+    d = (domain or "").strip().lower().lstrip(".")
+    if d in domain_map:
+        return domain_map[d]
+    for dom, oid in domain_map.items():
+        if d.endswith("." + dom):
+            return oid
+    return None
+
+
+def _ts_to_iso(ts: str) -> str | None:
+    try:
+        return datetime.strptime(ts, "%Y%m%d%H%M%S").isoformat(sep=" ")
+    except (ValueError, TypeError):
+        return None
+
+
+def parse_row(row: list[str], domain_map: dict[str, str]) -> GkgRecord | None:
+    """Map one raw GKG row to a GkgRecord, or None if not ours / malformed."""
+    if len(row) < 27:
+        return None
+    oid = match_outlet(row[_COL_DOMAIN], domain_map)
+    if oid is None:
+        return None
+    url = (row[_COL_URL] or "").strip()
+    if not url:
+        return None
+
+    counts = row[_COL_COUNTS] or ""
+    m = _WC.search(counts)
+    word_count = int(m.group(1)) if m else None
+
+    extras = row[_COL_EXTRAS] or ""
+    author = _AUTHORS.search(extras)
+    author = author.group(1).strip() if author else None
+    title = _TITLE.search(extras)
+    title = title.group(1).strip() if title else None
+    pub = _PUBLISHED.search(extras)
+    pub_ts = pub.group(1) if pub else (row[_COL_DATE] if len(row) > _COL_DATE else None)
+    published_at = _ts_to_iso(pub_ts) if pub_ts else None
+
+    return GkgRecord(
+        outlet_id=oid,
+        domain=(row[_COL_DOMAIN] or "").strip().lower(),
+        url=url,
+        article_id=article_id_for(url),
+        title=title,
+        published_at=published_at,
+        word_count=word_count,
+        author=author,
+    )
