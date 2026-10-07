@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from datetime import datetime
 
+import pytest
+
 from newsstats.backfill import gkg_timestamps, match_outlet, parse_row
 from newsstats.models import article_id_for
 
@@ -86,3 +88,21 @@ def test_iter_rows_handles_large_fields():
     assert len(rows) == 1
     rec = parse_row(rows[0], DOMAIN_MAP)
     assert rec is not None and rec.outlet_id == "cnn"
+
+
+def test_fetch_404_raises_gkgmissing_without_retry(monkeypatch):
+    import urllib.request as ur
+    from urllib.error import HTTPError
+
+    from newsstats.backfill import GkgMissing, fetch_file
+
+    calls = []
+
+    def fake_urlopen(req, timeout=None):
+        calls.append(1)
+        raise HTTPError(req.full_url, 404, "Not Found", {}, None)
+
+    monkeypatch.setattr(ur, "urlopen", fake_urlopen)
+    with pytest.raises(GkgMissing):
+        fetch_file("https://data.gdeltproject.org/gdeltv2/20221111000000.gkg.csv.zip")
+    assert len(calls) == 1  # permanent gap: no retry

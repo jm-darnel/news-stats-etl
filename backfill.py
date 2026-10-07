@@ -24,7 +24,7 @@ from datetime import datetime, timedelta
 
 import duckdb
 
-from newsstats.backfill import GKG_BASE, gkg_timestamps, process_gkg_file
+from newsstats.backfill import GKG_BASE, GkgMissing, gkg_timestamps, process_gkg_file
 from newsstats.config import load_sources
 
 _DDL = """
@@ -41,6 +41,7 @@ CREATE TABLE IF NOT EXISTS gdelt_article (
     source_type VARCHAR
 );
 CREATE TABLE IF NOT EXISTS gdelt_files_done (ts VARCHAR PRIMARY KEY);
+CREATE TABLE IF NOT EXISTS gdelt_files_missing (ts VARCHAR PRIMARY KEY);
 """
 
 _SQL_INSERT = """
@@ -74,15 +75,17 @@ def main() -> None:
     conn = duckdb.connect(args.db)
     conn.execute(_DDL)
     done = {r[0] for r in conn.execute("SELECT ts FROM gdelt_files_done").fetchall()}
-    todo = [s for s in stamps if s not in done]
+    missing = {r[0] for r in conn.execute("SELECT ts FROM gdelt_files_missing").fetchall()}
+    todo = [s for s in stamps if s not in done and s not in missing]
     print(f"outlets={len(domain_map)}  files={len(stamps)}  "
           f"window={start.date()}..{end.date()}  workers={args.workers}")
-    print(f"resuming: {len(done)} done, {len(todo)} to process")
+    print(f"resuming: {len(done)} done, {len(missing)} missing, {len(todo)} to process")
 
     per_worker_mbps = args.max_mbps / args.workers if args.max_mbps else None
     kept = 0
     processed = 0
     failed = 0
+    n_missing = 0
     t_start = time.time()
 
     it = iter(todo)
@@ -97,6 +100,10 @@ def main() -> None:
                 ts = futs[fut]
                 try:
                     rows = fut.result()
+                except GkgMissing:
+                    n_missing += 1
+                    conn.execute("INSERT OR IGNORE INTO gdelt_files_missing VALUES (?)", [ts])
+                    continue
                 except Exception as e:  # noqa: BLE001
                     failed += 1
                     print(f"  FAILED {ts}: {e}", flush=True)
@@ -108,12 +115,13 @@ def main() -> None:
                 processed += 1
             conn.commit()
             rate = processed / max(1, time.time() - t_start)
-            print(f"  {processed}/{len(todo)} files  kept={kept}  failed={failed}  "
-                  f"~{rate:.1f} files/s", flush=True)
+            print(f"  {processed}/{len(todo)} files  kept={kept}  missing={n_missing}  "
+                  f"failed={failed}  ~{rate:.1f} files/s", flush=True)
 
     conn.commit()
     conn.close()
-    print(f"done. files={processed} kept={kept} rows failed={failed} -> {args.db}")
+    print(f"done. files={processed} kept={kept} rows missing={n_missing} "
+          f"failed={failed} -> {args.db}")
 
 
 if __name__ == "__main__":

@@ -22,6 +22,7 @@ import zipfile
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from urllib import request
+from urllib.error import HTTPError
 
 from .models import article_id_for
 
@@ -30,6 +31,10 @@ from .models import article_id_for
 csv.field_size_limit(sys.maxsize)
 
 GKG_BASE = "https://data.gdeltproject.org/gdeltv2"
+
+
+class GkgMissing(Exception):
+    """The GKG file for a timestamp does not exist (permanent coverage gap)."""
 
 _WC = re.compile(r"(?:^|,)wc:(\d+)")
 _AUTHORS = re.compile(r"<PAGE_AUTHORS>(.*?)</PAGE_AUTHORS>", re.S)
@@ -126,10 +131,14 @@ def fetch_file(url: str, retries: int = 3) -> bytes:
             req = request.Request(url, headers={"User-Agent": "news-stats-etl/0.1 (portfolio)"})
             with request.urlopen(req, timeout=120) as resp:
                 return resp.read()
+        except HTTPError as e:
+            if e.code == 404:
+                raise GkgMissing(url) from e  # permanent; never retry
+            last_exc = e
         except Exception as e:  # noqa: BLE001
             last_exc = e
-            time.sleep(2 * (attempt + 1))
-    raise RuntimeError(f"failed after {retries} attempts") from last_exc
+        time.sleep(2 * (attempt + 1))
+    raise RuntimeError(f"failed after {retries} attempts: {last_exc}") from last_exc
 
 
 def iter_rows(data: bytes):
