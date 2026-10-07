@@ -48,6 +48,14 @@
 </header>
 <main>
   <div class="grid">
+    <div class="card" style="grid-column:1/-1;">
+      <h2>Article volume — 5-year history (GDELT backfill)</h2>
+      <div class="wrap"><canvas id="history-volume"></canvas></div>
+    </div>
+    <div class="card" style="grid-column:1/-1;">
+      <h2>Average article length — 5-year history</h2>
+      <div class="wrap"><canvas id="history-length"></canvas></div>
+    </div>
     <div class="card"><h2>Article volume over time</h2><div class="wrap"><canvas id="volume"></canvas></div></div>
     <div class="card"><h2>Average article length over time</h2><div class="wrap"><canvas id="length"></canvas></div></div>
     <div class="card"><h2>Author leaderboard (30 days)</h2><div class="wrap"><canvas id="leaderboard"></canvas></div></div>
@@ -64,7 +72,7 @@
     </div>
   </div>
 </main>
-<div class="foot">Words are whitespace tokens of the extracted article body. Backfill of pre-2026 history is in progress.</div>
+<div class="foot">Words are whitespace tokens of the extracted article body. 5-year history (Oct 2021–present) is a GDELT backfill covering 21 of 22 outlets — National Review isn't in GDELT's archive (forward RSS fills it going forward).</div>
 
 <script>
 const j = (f) => fetch(`data/${f}.json`).then(r => r.json());
@@ -92,6 +100,23 @@ function hbar(canvas, labels, series, color) {
                 y: { grid: { display: false } } } }
   });
 }
+
+function lineTimeline(canvas, labels, series, color) {
+  return new Chart(canvas, {
+    type: 'line',
+    data: { labels, datasets: [{ data: series, borderColor: color, backgroundColor: color + '22',
+             fill: true, tension: 0.2, pointRadius: 0, borderWidth: 1.5 }] },
+    options: { maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: { x: { ticks: { autoSkip: true, maxTicksLimit: 14 }, grid: { display: false } },
+                y: { beginAtZero: true, grid: { color: '#f3f4f6' } } } }
+  });
+}
+
+j('history').then(h => {
+  lineTimeline(document.getElementById('history-volume'), h.days, h.articles, '#4f46e5');
+  lineTimeline(document.getElementById('history-length'), h.days, h.avg_words, '#0ea5e9');
+}).catch(() => { /* history.json optional */ });
 
 Promise.all([j('summary'), j('volume'), j('length'), j('leaderboard'), j('outlet_length')]).then(
   ([summary, volume, length, lb, ol]) => {

@@ -10,6 +10,11 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+# The backfill streamed GDELT files from 2021-10-01. GDELT's <PAGE_PRECISEPUBTIMESTAMP>
+# is occasionally garbage (dates back to 1979); anything before the window start is
+# miscategorized and excluded from aggregates.
+WINDOW_START = "2021-10-01"
+
 
 def build_outlet_daily(conn) -> None:
     """Create gdelt_outlet_daily: one row per (outlet, day)."""
@@ -21,9 +26,10 @@ def build_outlet_daily(conn) -> None:
                count(*) AS article_count,
                round(avg(word_count), 1) AS avg_word_count
         FROM gdelt_article
-        WHERE published_at IS NOT NULL
+        WHERE published_at >= CAST(? AS TIMESTAMP)
         GROUP BY outlet_id, CAST(published_at AS DATE)
-        """
+        """,
+        [WINDOW_START],
     )
 
 
@@ -35,10 +41,11 @@ def daily_totals(conn) -> list[dict]:
                count(*) AS articles,
                round(avg(word_count), 1) AS avg_words
         FROM gdelt_article
-        WHERE published_at IS NOT NULL
+        WHERE published_at >= CAST(? AS TIMESTAMP)
         GROUP BY CAST(published_at AS DATE)
         ORDER BY day
-        """
+        """,
+        [WINDOW_START],
     ).fetchall()]
 
 
@@ -60,9 +67,15 @@ def write_history_json(conn, out_dir: str | Path = "dashboard/data") -> dict:
 
     payload = {
         "summary": {
-            "articles": conn.execute("SELECT count(*) FROM gdelt_article").fetchone()[0],
+            "articles": conn.execute(
+                "SELECT count(*) FROM gdelt_article WHERE published_at >= CAST(? AS TIMESTAMP)",
+                [WINDOW_START],
+            ).fetchone()[0],
             "outlets": conn.execute(
-                "SELECT count(DISTINCT outlet_id) FROM gdelt_article").fetchone()[0],
+                "SELECT count(DISTINCT outlet_id) FROM gdelt_article "
+                "WHERE published_at >= CAST(? AS TIMESTAMP)",
+                [WINDOW_START],
+            ).fetchone()[0],
             "start": totals[0]["day"].isoformat() if totals else None,
             "end": totals[-1]["day"].isoformat() if totals else None,
         },
