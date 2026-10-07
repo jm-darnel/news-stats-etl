@@ -16,6 +16,7 @@ from __future__ import annotations
 import csv
 import io
 import re
+import sys
 import time
 import zipfile
 from dataclasses import dataclass
@@ -23,6 +24,10 @@ from datetime import datetime, timedelta
 from urllib import request
 
 from .models import article_id_for
+
+# Some GKG rows carry single fields (counts/locations/extras) far bigger than
+# Python's 128 KB csv default; raise it or the whole file fails to parse.
+csv.field_size_limit(sys.maxsize)
 
 GKG_BASE = "https://data.gdeltproject.org/gdeltv2"
 
@@ -157,7 +162,10 @@ def process_gkg_file(ts: str, domain_map: dict[str, str],
         throttle(len(data), per_worker_mbps, t0)
     out: list[tuple] = []
     for row in iter_rows(data):
-        rec = parse_row(row, domain_map)
+        try:
+            rec = parse_row(row, domain_map)
+        except Exception:  # noqa: BLE001
+            continue  # one malformed row must not sink the whole file
         if rec is not None:
             out.append((rec.article_id, rec.outlet_id, rec.domain, rec.url,
                         rec.title, rec.published_at, rec.word_count, rec.author))

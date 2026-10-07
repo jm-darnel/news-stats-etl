@@ -64,3 +64,25 @@ def test_parse_row_word_count_missing_and_date_fallback():
 
 def test_parse_row_short_row_returns_none():
     assert parse_row(["x", "y"], DOMAIN_MAP) is None
+
+
+def test_iter_rows_handles_large_fields():
+    import io
+    import zipfile
+
+    from newsstats.backfill import iter_rows
+
+    big = "c9.99999:1" + (",x" * 60_000)  # > 128 KB in one field
+    row = [""] * 27
+    row[3] = "cnn.com"
+    row[4] = "https://www.cnn.com/2026/10/05/x"
+    row[17] = big
+    line = "\t".join(row) + "\n"
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w") as z:
+        z.writestr("f.csv", line)
+
+    rows = list(iter_rows(buf.getvalue()))
+    assert len(rows) == 1
+    rec = parse_row(rows[0], DOMAIN_MAP)
+    assert rec is not None and rec.outlet_id == "cnn"
