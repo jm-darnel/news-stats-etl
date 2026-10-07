@@ -116,3 +116,29 @@ def test_rules_fallback_parser():
     assert q.dimension == "outlet"
     assert set(q.outlets) == {"cnn", "fox"}
     assert q.days == 30
+
+
+def test_rejects_individual_article_superlative():
+    with pytest.raises(QueryError):
+        chat.parse_question_rules("which article is the longest", {"cnn"}, set())
+    with pytest.raises(QueryError):
+        chat.parse_question_rules("which outlet has the 3rd largest article by word count",
+                                  {"cnn", "fox"}, set())
+
+
+def test_llm_failure_falls_back_to_rules(conn):
+    def bad_llm(prompt: str) -> str:
+        raise RuntimeError("llm down")
+
+    text = answer("compare article volume for cnn vs fox over the last 30 days",
+                  conn, bad_llm, {"cnn", "fox"}, set())
+    assert "cnn" in text and "fox" in text
+
+
+def test_prompt_has_no_stray_format_braces():
+    from datetime import date
+
+    from newsstats.chat import _PROMPT
+    # a literal brace in the template would make .format() raise
+    _PROMPT.format(outlets="cnn,fox", categories="politics",
+                   today=date.today().isoformat(), question="test")

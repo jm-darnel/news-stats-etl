@@ -1,4 +1,9 @@
 {
   "framework": null,
-  "outputDirectory": "dashboard"
+  "outputDirectory": "dashboard",
+  "functions": {
+    "api/chat.py": {
+      "maxDuration": 30
+    }
+  }
 }

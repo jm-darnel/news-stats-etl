@@ -168,18 +168,35 @@ def format_answer(q: MetricQuery, rows: list[dict]) -> str:
     return intro + "\n" + "\n".join(lines)
 
 
+def _rejection(msg: str) -> str:
+    return (f"I can't answer that through the metrics I track. {msg} "
+            "I handle aggregates only: article volume, average length, or total words, "
+            "grouped by outlet, author, category, or day, over a date range.")
+
+
 def answer(question: str, conn, llm_fn: Callable[[str], str] | None = None,
            valid_outlets: set[str] | None = None,
            valid_categories: set[str] | None = None) -> str:
-    try:
-        q = parse_question(question, llm_fn, valid_outlets, valid_categories)
-        q.validate(valid_outlets, valid_categories)
+    outlets = valid_outlets or set()
+    categories = valid_categories or set()
+
+    def run(q: MetricQuery) -> str:
+        q.validate(outlets, categories)
         rows = run_query(conn, q)
         return format_answer(q, rows)
+
+    if llm_fn is not None:
+        try:
+            return run(parse_question_llm(question, llm_fn, outlets, categories))
+        except QueryError as e:
+            return _rejection(str(e))
+        except Exception:
+            # LLM failure (timeout, network, bad response) -> fall back to rules
+            pass
+    try:
+        return run(parse_question_rules(question, outlets, categories))
     except QueryError as e:
-        return (f"I can't answer that with the metrics I track. ({e}) "
-                "Try asking about article volume, average length, or total words, "
-                "grouped by outlet, author, category, or day, over a date range.")
+        return _rejection(str(e))
 
 
 # ---------------------------------------------------------------------------
@@ -207,8 +224,14 @@ Rules:
   start 2025-09-24, end 2025-09-30. "September 2025" -> start 2025-09-01, end 2025-09-30.
 - limit: max rows (default 20).
 
-Return ONLY valid JSON with keys: metrics, dimension, outlets, category, author, start, end, days, limit.
-No prose, no code fences.
+You can ONLY express aggregates. If the question asks for a specific/individual article,
+or ranks individual articles (e.g. "which article is the longest", "the 3rd largest article",
+"the shortest article"), you cannot express it in these fields. Instead set the top-level key
+"error" to "I can only compare aggregates, not pick out individual articles." and return no
+other keys. (Do NOT use brace characters inside the error value.)
+
+Return ONLY valid JSON with keys: metrics, dimension, outlets, category, author, start, end, days, limit
+(plus a top-level "error" key if and only if the question cannot be expressed). No prose, no code fences.
 
 Question: {question}
 """
@@ -236,6 +259,8 @@ def parse_question_llm(question: str, llm_fn: Callable[[str], str],
         question=question,
     )
     data = _extract_json(llm_fn(prompt))
+    if data.get("error"):
+        raise QueryError(data["error"])
     return MetricQuery(
         metrics=[m for m in data.get("metrics", ["articles"]) if isinstance(m, str)],
         dimension=data.get("dimension") or None,
@@ -253,6 +278,14 @@ def parse_question_rules(question: str, valid_outlets: set[str],
                          valid_categories: set[str]) -> MetricQuery:
     """Deterministic fallback parser for common phrasings (no LLM needed)."""
     t = question.lower()
+    # individual-article superlatives/ordinals are out of scope (aggregates only)
+    _superl = r"\b(longest|shortest|largest|smallest|highest|lowest|biggest|oldest|newest)\b"
+    _ordinal = r"\b(?:1st|2nd|3rd|4th|5th|\d+(?:st|nd|rd|th)|first|second|third|fourth)\b"
+    _article = r"\barticle\b"  # singular: targets one article, vs. "articles" (aggregate)
+    if re.search(_superl, t) and re.search(_article, t):
+        raise QueryError("I can only compare aggregates, not pick out individual articles.")
+    if re.search(_ordinal, t) and re.search(_article, t):
+        raise QueryError("I can only compare aggregates, not pick out individual articles.")
     q = MetricQuery()
 
     metrics: list[str] = []

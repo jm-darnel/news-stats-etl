@@ -135,17 +135,23 @@ chatForm.addEventListener('submit', async (e) => {
   chatInput.value = '';
   const btn = chatForm.querySelector('button'); btn.disabled = true;
   const pending = addMsg('...', 'bot');
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 20000);
   try {
     const r = await fetch('/api/chat', {
       method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({question:q})
+      body: JSON.stringify({question:q}), signal: ctrl.signal
     });
     const data = await r.json();
     pending.innerHTML = renderMd(data.answer || data.error || 'no answer');
   } catch(err) {
-    pending.textContent = 'Request failed: ' + err;
+    pending.textContent = err.name === 'AbortError'
+      ? 'This is taking too long - try a simpler question.'
+      : 'Request failed: ' + err;
+  } finally {
+    clearTimeout(timer);
+    btn.disabled = false;
   }
-  btn.disabled = false;
 });
 </script>
 </body>
