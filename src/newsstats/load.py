@@ -101,9 +101,27 @@ def upsert(conn, source: SourceConfig, rows: list[CanonicalArticle], run_id: str
                 " ON CONFLICT DO NOTHING",
                 [r.article_id, aid, order],
             )
+    return len(rows)
+
+
+def record_run(
+    conn,
+    run_id: str,
+    started_at: str,
+    rows_in: int,
+    rows_flagged: int,
+    status: str = "ok",
+) -> None:
     conn.execute(
         "INSERT INTO ingest_run (run_id,started_at,finished_at,rows_in,rows_flagged,status)"
         " VALUES (?,?,?,?,?,?)",
-        [run_id, _to_ts(started_at), datetime.now().isoformat(), len(rows), 0, "ok"],
+        [run_id, _to_ts(started_at), datetime.now(UTC).isoformat(), rows_in, rows_flagged, status],
     )
-    return len(rows)
+
+
+def write_dq(conn, run_id: str, results) -> None:
+    for r in results:
+        conn.execute(
+            "INSERT INTO dq_result (run_id,check_name,passed,detail) VALUES (?,?,?,?)",
+            [run_id, r.check_name, r.passed, r.detail],
+        )
