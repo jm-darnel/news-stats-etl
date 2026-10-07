@@ -24,6 +24,16 @@
   .card h2 { margin:0 0 12px; font-size:15px; font-weight:600; color:var(--muted); }
   .card .wrap { position:relative; height:280px; }
   .foot { max-width:1080px; margin:0 auto; padding:0 32px 48px; color:var(--muted); font-size:12px; }
+  .chat-card { grid-column:1 / -1; }
+  #chat-log { max-height:260px; overflow-y:auto; margin-bottom:12px; display:flex; flex-direction:column; gap:8px; }
+  .msg { padding:8px 12px; border-radius:8px; font-size:14px; line-height:1.5; }
+  .msg.user { background:#eef2ff; align-self:flex-end; max-width:80%; }
+  .msg.bot { background:var(--bg); border:1px solid var(--border); align-self:flex-start; max-width:90%; white-space:pre-wrap; }
+  .msg.sys { color:var(--muted); font-size:13px; }
+  #chat-form { display:flex; gap:8px; }
+  #chat-input { flex:1; padding:10px 12px; border:1px solid var(--border); border-radius:8px; font-size:14px; font-family:inherit; }
+  #chat-form button { padding:10px 18px; background:var(--accent); color:#fff; border:0; border-radius:8px; font-size:14px; cursor:pointer; }
+  #chat-form button:disabled { opacity:.5; cursor:default; }
 </style>
 </head>
 <body>
@@ -42,6 +52,16 @@
     <div class="card"><h2>Average article length over time</h2><div class="wrap"><canvas id="length"></canvas></div></div>
     <div class="card"><h2>Author leaderboard (30 days)</h2><div class="wrap"><canvas id="leaderboard"></canvas></div></div>
     <div class="card"><h2>Average length by outlet</h2><div class="wrap"><canvas id="outlet-length"></canvas></div></div>
+    <div class="card chat-card">
+      <h2>Ask about the data</h2>
+      <div id="chat-log">
+        <div class="msg sys">Ask about article volume, average length, or total words - grouped by outlet, author, category, or day, over a date range. e.g. "Compare CNN and FOX article length over the past 90 days."</div>
+      </div>
+      <form id="chat-form" autocomplete="off">
+        <input id="chat-input" type="text" placeholder="Ask a question about the news data..." required>
+        <button type="submit">Ask</button>
+      </form>
+    </div>
   </div>
 </main>
 <div class="foot">Words are whitespace tokens of the extracted article body. Backfill of pre-2026 history is in progress.</div>
@@ -91,6 +111,41 @@ Promise.all([j('summary'), j('volume'), j('length'), j('leaderboard'), j('outlet
   }
 ).catch(e => {
   document.body.insertAdjacentHTML('beforeend', '<div style="color:#dc2626;padding:20px">failed to load data: ' + e + '</div>');
+});
+
+// --- chat ---
+const chatLog = document.getElementById('chat-log');
+const chatForm = document.getElementById('chat-form');
+const chatInput = document.getElementById('chat-input');
+
+function esc(s){ const d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
+function renderMd(s){ return esc(s).replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>'); }
+function addMsg(text, cls){
+  const d=document.createElement('div'); d.className='msg '+cls;
+  d.innerHTML = cls==='bot' ? renderMd(text) : esc(text);
+  chatLog.appendChild(d); chatLog.scrollTop = chatLog.scrollHeight;
+  return d;
+}
+
+chatForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const q = chatInput.value.trim();
+  if(!q) return;
+  addMsg(q, 'user');
+  chatInput.value = '';
+  const btn = chatForm.querySelector('button'); btn.disabled = true;
+  const pending = addMsg('...', 'bot');
+  try {
+    const r = await fetch('/api/chat', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({question:q})
+    });
+    const data = await r.json();
+    pending.innerHTML = renderMd(data.answer || data.error || 'no answer');
+  } catch(err) {
+    pending.textContent = 'Request failed: ' + err;
+  }
+  btn.disabled = false;
 });
 </script>
 </body>
