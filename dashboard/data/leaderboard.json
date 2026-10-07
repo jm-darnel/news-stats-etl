@@ -1,0 +1,122 @@
+[
+  {
+    "author": "The Intercept Briefing",
+    "outlet": "intercept",
+    "articles": 2,
+    "words": 15373
+  },
+  {
+    "author": "Guardian staff reporter",
+    "outlet": "guardian",
+    "articles": 16,
+    "words": 11763
+  },
+  {
+    "author": "Holly Yan",
+    "outlet": "cnn",
+    "articles": 4,
+    "words": 11621
+  },
+  {
+    "author": "Gloria Pazmino",
+    "outlet": "cnn",
+    "articles": 4,
+    "words": 11621
+  },
+  {
+    "author": "Martin Robinson",
+    "outlet": "dailymail",
+    "articles": 5,
+    "words": 8939
+  },
+  {
+    "author": "Frank Andrews",
+    "outlet": "cbs",
+    "articles": 1,
+    "words": 8086
+  },
+  {
+    "author": "Isa Mudannayake",
+    "outlet": "cnn",
+    "articles": 2,
+    "words": 6998
+  },
+  {
+    "author": "Jessie Yeung",
+    "outlet": "cnn",
+    "articles": 2,
+    "words": 6998
+  },
+  {
+    "author": "Liliana Segura",
+    "outlet": "intercept",
+    "articles": 2,
+    "words": 6715
+  },
+  {
+    "author": "Andrew Khouri",
+    "outlet": "latimes",
+    "articles": 5,
+    "words": 6334
+  },
+  {
+    "author": "Rob Schenck",
+    "outlet": "motherjones",
+    "articles": 1,
+    "words": 5841
+  },
+  {
+    "author": "Alix Fox",
+    "outlet": "guardian",
+    "articles": 1,
+    "words": 5808
+  },
+  {
+    "author": "Samira Shackle",
+    "outlet": "guardian",
+    "articles": 1,
+    "words": 5754
+  },
+  {
+    "author": "Amy Nicholson",
+    "outlet": "latimes",
+    "articles": 2,
+    "words": 5386
+  },
+  {
+    "author": "Nicki Brown",
+    "outlet": "cnn",
+    "articles": 2,
+    "words": 5252
+  },
+  {
+    "author": "Louryn Strampe",
+    "outlet": "wired",
+    "articles": 2,
+    "words": 4876
+  },
+  {
+    "author": "Hanna Park",
+    "outlet": "cnn",
+    "articles": 2,
+    "words": 4623
+  },
+  {
+    "author": "Zoe Malin",
+    "outlet": "nbc",
+    "articles": 1,
+    "words": 4250
+  },
+  {
+    "author": "Jennifer Smith Richards",
+    "outlet": "propublica",
+    "articles": 2,
+    "words": 4177
+  },
+  {
+    "author": "Jodi S. Cohen",
+    "outlet": "propublica",
+    "articles": 2,
+    "words": 4177
+  }
+]

@@ -19,11 +19,14 @@ from newsstats.models import DiscoveredArticle, SourceConfig
 _EXCLUDE_PATH = re.compile(
     r"/(feed|rss|tag|topics|author|staff|about|contact|subscribe|newsletter)/?$", re.I
 )
+_SIGNUP = re.compile(r"sign-?up", re.I)
 
 
 def _looks_like_article(url: str, skip_prefixes: tuple = ()) -> bool:
     path = urlparse(url).path
     if len(path.strip("/")) <= 6 or _EXCLUDE_PATH.search(path):
+        return False
+    if _SIGNUP.search(path):
         return False
     return not any(path.startswith(p) for p in skip_prefixes)
 
