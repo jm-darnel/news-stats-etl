@@ -17,7 +17,16 @@ import duckdb
 from newsstats.models import CanonicalArticle, SourceConfig, author_id_for
 
 DEFAULT_DB = "data/warehouse.duckdb"
-_MIGRATIONS = Path(__file__).resolve().parents[2] / "migrations"
+
+
+def _migrations_dir() -> Path:
+    """Migrations live in the repo root. Prefer CWD (running from the checkout,
+    which is the GitHub Actions working dir); fall back to the editable-install
+    location so `pip install -e .` from another cwd still works."""
+    cwd = Path("migrations")
+    if cwd.is_dir():
+        return cwd.resolve()
+    return Path(__file__).resolve().parents[2] / "migrations"
 
 
 def connect(db_url: str | None = None):
@@ -28,7 +37,7 @@ def connect(db_url: str | None = None):
 
 
 def init_schema(conn) -> None:
-    for f in sorted(_MIGRATIONS.glob("*.sql")):
+    for f in sorted(_migrations_dir().glob("*.sql")):
         conn.execute(f.read_text())
 
 
