@@ -49,3 +49,25 @@ GitHub Actions cannot reach a local file). Same DuckDB engine, one account.
 set -a; . ./.env; set +a
 python etl.py --source slate --limit 1   # now writes to md:newsstats
 ```
+
+## Deploy (Vercel)
+
+Static dashboard (`dashboard/`) + one Python serverless function (`api/chat.py`).
+
+- `vercel.json`: `framework: null` (static, not a Python service) + `outputDirectory: dashboard`.
+  Without `framework: null`, Vercel sees `pyproject.toml` and misdetects a Python app
+  ("No python entrypoint found").
+- Serverless function deps come from `requirements.txt` (`duckdb` only). The function adds
+  `src/` to `sys.path` and imports `newsstats.chat`/`newsstats.llm` directly, so the heavy
+  ETL deps (trafilatura/feedparser) are not installed in the function.
+
+Required Vercel environment variables (Project Settings -> Environment Variables):
+
+| Name | Required | Purpose |
+|---|---|---|
+| `motherduck_token` | yes | read the warehouse (`md:newsstats`) |
+| `OPENROUTER_API_KEY` | optional | LLM question parsing; without it a deterministic rule parser handles common phrasings |
+| `NEWSSTATS_LLM_MODEL` | optional | default `deepseek/deepseek-chat` |
+
+Without `motherduck_token` the chatbot returns an IO/auth error; the static charts keep working
+(they read committed JSON in `dashboard/data/`, refreshed by `python export.py`).

@@ -18,10 +18,18 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
 import duckdb  # noqa: E402
 
+# Serverless filesystems have no writable HOME; DuckDB (and the MotherDuck
+# extension download) needs one. /tmp is the only writable dir on Vercel.
+os.environ.setdefault("HOME", "/tmp")
+
 from newsstats import chat as chatmod  # noqa: E402
 from newsstats import llm  # noqa: E402
 
 DB_URL = os.environ.get("NEWSSTATS_DB_URL", "md:newsstats")
+
+
+def _connect():
+    return duckdb.connect(DB_URL, config={"home_directory": "/tmp"})
 
 
 def _has_llm_key() -> bool:
@@ -50,7 +58,7 @@ class handler(BaseHTTPRequestHandler):
             question = (data.get("question") or "").strip()
             if not question:
                 return self._send(400, {"error": "missing 'question'"})
-            conn = duckdb.connect(DB_URL)
+            conn = _connect()
             try:
                 outlets, cats = chatmod.load_whitelists(conn)
                 llm_fn = llm.chat if _has_llm_key() else None
