@@ -20,8 +20,9 @@ from .normalize import _NON_PERSON
 # "Name For Mailonline" is the Daily-Mail byline convention: strip the publication
 # qualifier so "Amelia Wynne" and "Amelia Wynne For Mailonline" collapse to one.
 _FOR_SUFFIX = re.compile(
-    r"(?:^|\s+)for\s+(mailonline|dailymail\.com|daily\s+mail\s+australia|the\s+conversation"
-    r"|the\s+guardian|the\s+sun|cnn|nbc\s+news|fox\s+news|cbs\s+news)", re.I)
+    r"(?:^|\s+)for\s+(?:the\s+)?(mailonline|dailymail\.com|daily\s+mail(?:\s+australia)?"
+    r"|mail\s+on\s+sunday|the\s+conversation|guardian|the\s+guardian|sun|the\s+sun"
+    r"|cnn|nbc\s+news|fox\s+news|cbs\s+news|mail)", re.I)
 
 _HTML_TAG = re.compile(r"<[^>]+>")
 
@@ -56,11 +57,19 @@ def canonical_key(name: str) -> str:
     return re.sub(r"\s+", " ", n).strip().casefold()
 
 
+_WIRE_STRIP = re.compile(
+    r"\s*/\s*(?:ap|reuters|afp|upi|pa\s*media|xinhua|bloomberg|associated\s+press)\b.*$",
+    re.I,
+)
+
+
 def split_names(raw: str | None) -> list[str]:
     """Raw byline -> deduplicated list of clean person names (preserving order)."""
     if not raw:
         return []
-    s = html.unescape(raw)
+    s = _HTML_TAG.sub(" ", html.unescape(raw))
+    # strip a trailing "/ WIRE ..." attribution ("Aamer Madhani / AP" -> "Aamer Madhani")
+    s = _WIRE_STRIP.sub("", s)
     parts = re.split(r"[;,;&]|\s+and\s+", s)
     names: list[str] = []
     seen: set[str] = set()

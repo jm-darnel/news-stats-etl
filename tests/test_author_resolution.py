@@ -38,6 +38,16 @@ def test_accent_folding_key():
     assert canonical_key("Ivana Kottasová") == canonical_key("Ivana Kottasova")
 
 
+def test_splits_wire_attribution():
+    assert split_names("Aamer Madhani / AP") == ["Aamer Madhani"]
+    assert split_names("Jane Roe / Reuters") == ["Jane Roe"]
+
+
+def test_strips_mail_on_sunday_suffix():
+    assert split_names("A.N. Wilson For The Daily Mail") == ["A.N. Wilson"]
+    assert split_names("A.n. Wilson For The Mail On Sunday") == ["A.n. Wilson"]
+
+
 def test_dedup_is_case_insensitive():
     assert split_names("Maureen Chowdhury;MAUREEN CHOWDHURY") == ["Maureen Chowdhury"]
 
