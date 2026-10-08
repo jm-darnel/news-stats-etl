@@ -3,120 +3,120 @@
     "author": "The Intercept Briefing",
     "outlet": "intercept",
     "articles": 2,
-    "words": 15373
-  },
-  {
-    "author": "Guardian staff reporter",
-    "outlet": "guardian",
-    "articles": 16,
-    "words": 11763
-  },
-  {
-    "author": "Holly Yan",
-    "outlet": "cnn",
-    "articles": 4,
-    "words": 11621
-  },
-  {
-    "author": "Gloria Pazmino",
-    "outlet": "cnn",
-    "articles": 4,
-    "words": 11621
-  },
-  {
-    "author": "Martin Robinson",
-    "outlet": "dailymail",
-    "articles": 5,
-    "words": 8939
+    "words": 15366
   },
   {
     "author": "Frank Andrews",
     "outlet": "cbs",
-    "articles": 1,
-    "words": 8086
+    "articles": 2,
+    "words": 15160
   },
   {
-    "author": "Isa Mudannayake",
+    "author": "Gloria Pazmino",
     "outlet": "cnn",
-    "articles": 2,
-    "words": 6998
-  },
-  {
-    "author": "Jessie Yeung",
-    "outlet": "cnn",
-    "articles": 2,
-    "words": 6998
-  },
-  {
-    "author": "Liliana Segura",
-    "outlet": "intercept",
-    "articles": 2,
-    "words": 6715
-  },
-  {
-    "author": "Andrew Khouri",
-    "outlet": "latimes",
     "articles": 5,
-    "words": 6334
+    "words": 13537
   },
   {
-    "author": "Rob Schenck",
-    "outlet": "motherjones",
-    "articles": 1,
-    "words": 5841
-  },
-  {
-    "author": "Alix Fox",
-    "outlet": "guardian",
-    "articles": 1,
-    "words": 5808
-  },
-  {
-    "author": "Samira Shackle",
-    "outlet": "guardian",
-    "articles": 1,
-    "words": 5754
-  },
-  {
-    "author": "Amy Nicholson",
-    "outlet": "latimes",
-    "articles": 2,
-    "words": 5386
-  },
-  {
-    "author": "Nicki Brown",
+    "author": "Holly Yan",
     "outlet": "cnn",
-    "articles": 2,
-    "words": 5252
+    "articles": 5,
+    "words": 13537
   },
   {
     "author": "Louryn Strampe",
     "outlet": "wired",
-    "articles": 2,
-    "words": 4876
-  },
-  {
-    "author": "Hanna Park",
-    "outlet": "cnn",
-    "articles": 2,
-    "words": 4623
+    "articles": 4,
+    "words": 12859
   },
   {
     "author": "Zoe Malin",
     "outlet": "nbc",
-    "articles": 1,
-    "words": 4250
+    "articles": 2,
+    "words": 10910
   },
   {
-    "author": "Jennifer Smith Richards",
-    "outlet": "propublica",
-    "articles": 2,
-    "words": 4177
+    "author": "Martin Robinson",
+    "outlet": "dailymail",
+    "articles": 6,
+    "words": 10144
   },
   {
-    "author": "Jodi S. Cohen",
-    "outlet": "propublica",
+    "author": "Erin Deborah Waks",
+    "outlet": "dailymail",
+    "articles": 7,
+    "words": 9983
+  },
+  {
+    "author": "Eliana Silver",
+    "outlet": "dailymail",
+    "articles": 6,
+    "words": 9658
+  },
+  {
+    "author": "Aidan Radnedge",
+    "outlet": "dailymail",
+    "articles": 9,
+    "words": 9463
+  },
+  {
+    "author": "Charlotte Dean",
+    "outlet": "dailymail",
+    "articles": 11,
+    "words": 9251
+  },
+  {
+    "author": "Maanya Sachdeva",
+    "outlet": "dailymail",
+    "articles": 6,
+    "words": 9133
+  },
+  {
+    "author": "Jon Brodkin",
+    "outlet": "arstechnica",
+    "articles": 4,
+    "words": 8800
+  },
+  {
+    "author": "Joanna Crawley",
+    "outlet": "dailymail",
+    "articles": 11,
+    "words": 8644
+  },
+  {
+    "author": "Eleanor Mann",
+    "outlet": "dailymail",
+    "articles": 9,
+    "words": 8584
+  },
+  {
+    "author": "Rebecca Davison",
+    "outlet": "dailymail",
+    "articles": 8,
+    "words": 8060
+  },
+  {
+    "author": "Joe Sommerlad",
+    "outlet": "independent",
+    "articles": 10,
+    "words": 7887
+  },
+  {
+    "author": "Andrew Khouri",
+    "outlet": "latimes",
+    "articles": 6,
+    "words": 7834
+  },
+  {
+    "author": "Rebecca Whittaker",
+    "outlet": "independent",
+    "articles": 12,
+    "words": 7719
+  },
+  {
+    "author": "Miska Salemann",
+    "outlet": "nypost",
     "articles": 2,
-    "words": 4177
+    "words": 7621
   }
 ]

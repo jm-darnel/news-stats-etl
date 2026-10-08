@@ -1,5 +1,35 @@
 {
-  "articles": 1060,
-  "authors": 898,
-  "outlets": 22
+  "articles": 2895,
+  "authors": 1871,
+  "outlets": 22,
+  "health": {
+    "status": "ok",
+    "last_run_at": "2026-10-08 12:53:04.525865",
+    "age_hours": 3.5,
+    "rows_last_run": 10,
+    "rows_flagged": 0,
+    "dq_checks_failed": 0,
+    "sources": 22,
+    "total_articles": 2895
+  },
+  "trends": {
+    "7": {
+      "articles": 5563,
+      "avg_words": 632.7,
+      "volume_pct_change": 2.0,
+      "top_outlet": "nypost"
+    },
+    "30": {
+      "articles": 25452,
+      "avg_words": 638.0,
+      "volume_pct_change": -7.0,
+      "top_outlet": "nypost"
+    },
+    "90": {
+      "articles": 82063,
+      "avg_words": 636.3,
+      "volume_pct_change": -19.3,
+      "top_outlet": "nypost"
+    }
+  }
 }

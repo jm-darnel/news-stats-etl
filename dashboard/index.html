@@ -17,14 +17,20 @@
   .stat { background:var(--card); border:1px solid var(--border); border-radius:8px; padding:12px 18px; }
   .stat .n { font-size:22px; font-weight:700; }
   .stat .l { font-size:12px; color:var(--muted); text-transform:uppercase; letter-spacing:.5px; }
+  .health { margin:14px 0 0; font-size:13px; color:var(--muted); display:flex; align-items:center; gap:8px; }
+  .health .dot { width:9px; height:9px; border-radius:50%; flex:0 0 auto; }
   main { max-width:1080px; margin:0 auto; padding:12px 32px 40px; }
   .grid { display:grid; grid-template-columns:1fr 1fr; gap:20px; }
   @media (max-width:820px){ .grid { grid-template-columns:1fr; } }
   .card { background:var(--card); border:1px solid var(--border); border-radius:10px; padding:18px; }
   .card h2 { margin:0 0 12px; font-size:15px; font-weight:600; color:var(--muted); }
+  .chart-head { display:flex; justify-content:space-between; align-items:center; margin:0 0 12px; }
+  .chart-head h2 { margin:0; }
+  .range { font-size:12px; padding:4px 6px; border:1px solid var(--border); border-radius:6px; background:var(--card); color:var(--fg); }
   .card .wrap { position:relative; height:280px; }
   .foot { max-width:1080px; margin:0 auto; padding:0 32px 48px; color:var(--muted); font-size:12px; }
   .chat-card { grid-column:1 / -1; }
+  #trends p { margin:6px 0; font-size:14px; line-height:1.5; }
   #chat-log { max-height:260px; overflow-y:auto; margin-bottom:12px; display:flex; flex-direction:column; gap:8px; }
   .msg { padding:8px 12px; border-radius:8px; font-size:14px; line-height:1.5; }
   .msg.user { background:#eef2ff; align-self:flex-end; max-width:80%; }
@@ -45,21 +51,44 @@
     <div class="stat"><div class="n" id="s-authors">-</div><div class="l">authors</div></div>
     <div class="stat"><div class="n" id="s-outlets">-</div><div class="l">outlets</div></div>
   </div>
+  <div class="health" id="health-line">-</div>
 </header>
 <main>
   <div class="grid">
     <div class="card" style="grid-column:1/-1;">
-      <h2>Article volume — 5-year history (GDELT backfill)</h2>
+      <div class="chart-head">
+        <h2>Article volume — 5-year history (GDELT backfill)</h2>
+        <select class="range" id="range-hvol"></select>
+      </div>
       <div class="wrap"><canvas id="history-volume"></canvas></div>
     </div>
     <div class="card" style="grid-column:1/-1;">
-      <h2>Average article length — 5-year history</h2>
+      <div class="chart-head">
+        <h2>Average article length — 5-year history</h2>
+        <select class="range" id="range-hlen"></select>
+      </div>
       <div class="wrap"><canvas id="history-length"></canvas></div>
     </div>
-    <div class="card"><h2>Article volume over time</h2><div class="wrap"><canvas id="volume"></canvas></div></div>
-    <div class="card"><h2>Average article length over time</h2><div class="wrap"><canvas id="length"></canvas></div></div>
+    <div class="card">
+      <div class="chart-head">
+        <h2>Article volume over time</h2>
+        <select class="range" id="range-vol"></select>
+      </div>
+      <div class="wrap"><canvas id="volume"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="chart-head">
+        <h2>Average article length over time</h2>
+        <select class="range" id="range-len"></select>
+      </div>
+      <div class="wrap"><canvas id="length"></canvas></div>
+    </div>
     <div class="card"><h2>Author leaderboard (30 days)</h2><div class="wrap"><canvas id="leaderboard"></canvas></div></div>
     <div class="card"><h2>Average length by outlet</h2><div class="wrap"><canvas id="outlet-length"></canvas></div></div>
+    <div class="card chat-card">
+      <h2>Trends (last 7 / 30 / 90 days)</h2>
+      <div id="trends"></div>
+    </div>
     <div class="card chat-card">
       <h2>Ask about the data</h2>
       <div id="chat-log">
@@ -79,15 +108,40 @@ const j = (f) => fetch(`data/${f}.json`).then(r => r.json());
 Chart.defaults.font.family = getComputedStyle(document.body).fontFamily;
 Chart.defaults.color = "#6b7280";
 
-function line(canvas, labels, series, color) {
+const RANGES = { '7d':7, '30d':30, '90d':90, '1y':365, 'all':1e9 };
+function rangeSelect(id, defaultVal) {
+  const sel = document.getElementById(id);
+  sel.innerHTML = Object.keys(RANGES).map(r => `<option ${r===defaultVal?'selected':''}>${r}</option>`).join('');
+  return sel;
+}
+
+function line(canvas, labels, series, color, opts) {
   return new Chart(canvas, {
     type: 'line',
     data: { labels, datasets: [{ data: series, borderColor: color, backgroundColor: color + '22',
-             fill: true, tension: 0.3, pointRadius: 0, borderWidth: 2 }] },
-    options: { maintainAspectRatio: false,
+             fill: true, tension: 0.2, pointRadius: 0, borderWidth: 1.5 }] },
+    options: Object.assign({
+      maintainAspectRatio: false,
       plugins: { legend: { display: false } },
-      scales: { x: { grid: { display: false } }, y: { beginAtZero: true, grid: { color: '#f3f4f6' } } } }
+      scales: { x: { ticks: { autoSkip: true, maxTicksLimit: (opts&&opts.maxTicks)||10 }, grid: { display: false } },
+                y: { beginAtZero: true, grid: { color: '#f3f4f6' } } }
+    }, opts || {})
   });
+}
+
+function filteredLine(canvasId, rangeId, days, series, color, maxTicks) {
+  const canvas = document.getElementById(canvasId);
+  const sel = rangeSelect(rangeId, '90d');
+  let chart = null;
+  function render() {
+    const n = RANGES[sel.value];
+    const start = Math.max(0, days.length - n);
+    const d = days.slice(start), s = series.slice(start);
+    if (chart) chart.destroy();
+    chart = line(canvas, d, s, color, { maxTicks });
+  }
+  sel.addEventListener('change', render);
+  render();
 }
 
 function hbar(canvas, labels, series, color) {
@@ -101,22 +155,10 @@ function hbar(canvas, labels, series, color) {
   });
 }
 
-function lineTimeline(canvas, labels, series, color) {
-  return new Chart(canvas, {
-    type: 'line',
-    data: { labels, datasets: [{ data: series, borderColor: color, backgroundColor: color + '22',
-             fill: true, tension: 0.2, pointRadius: 0, borderWidth: 1.5 }] },
-    options: { maintainAspectRatio: false,
-      plugins: { legend: { display: false } },
-      scales: { x: { ticks: { autoSkip: true, maxTicksLimit: 14 }, grid: { display: false } },
-                y: { beginAtZero: true, grid: { color: '#f3f4f6' } } } }
-  });
-}
-
 j('history').then(h => {
-  lineTimeline(document.getElementById('history-volume'), h.days, h.articles, '#4f46e5');
-  lineTimeline(document.getElementById('history-length'), h.days, h.avg_words, '#0ea5e9');
-}).catch(() => { /* history.json optional */ });
+  filteredLine('history-volume', 'range-hvol', h.days, h.articles, '#4f46e5', 14);
+  filteredLine('history-length', 'range-hlen', h.days, h.avg_words, '#0ea5e9', 14);
+}).catch(() => {});
 
 Promise.all([j('summary'), j('volume'), j('length'), j('leaderboard'), j('outlet_length')]).then(
   ([summary, volume, length, lb, ol]) => {
@@ -124,8 +166,26 @@ Promise.all([j('summary'), j('volume'), j('length'), j('leaderboard'), j('outlet
     document.getElementById('s-authors').textContent = summary.authors.toLocaleString();
     document.getElementById('s-outlets').textContent = summary.outlets.toLocaleString();
 
-    line(document.getElementById('volume'), volume.days, volume.total, '#4f46e5');
-    line(document.getElementById('length'), length.days, length.avg, '#0ea5e9');
+    const h = summary.health || {};
+    const tone = { ok:'#16a34a', warn:'#f59e0b', error:'#dc2626' }[h.status] || '#6b7280';
+    const hEl = document.getElementById('health-line');
+    if (h.last_run_at) {
+      hEl.innerHTML = `<span class="dot" style="background:${tone}"></span>ETL ${h.status} · ${h.sources} sources · ${h.total_articles.toLocaleString()} articles · last run ${h.age_hours}h ago (${h.rows_last_run} pulled, ${h.dq_checks_failed} DQ warnings)`;
+    } else {
+      hEl.innerHTML = `<span class="dot" style="background:${tone}"></span>${h.text || 'unknown'}`;
+    }
+
+    const t = summary.trends || {};
+    const blurb = (w, x) => {
+      const d = x.volume_pct_change;
+      const dir = d == null ? '' : (d >= 0 ? `up ${d}%` : `down ${Math.abs(d)}%`);
+      return `<p><strong>${w} days:</strong> ${x.articles.toLocaleString()} articles, avg ${x.avg_words} words, ${x.top_outlet} leads${dir ? ' — volume ' + dir + ' vs the prior ' + w + ' days' : ''}.</p>`;
+    };
+    document.getElementById('trends').innerHTML =
+      ['7','30','90'].map(w => t[w] ? blurb(w, t[w]) : '').join('');
+
+    filteredLine('volume', 'range-vol', volume.days, volume.total, '#4f46e5');
+    filteredLine('length', 'range-len', length.days, length.avg, '#0ea5e9');
 
     const lbLabels = lb.slice(0, 15).reverse().map(r => r.author + ' (' + r.outlet + ')');
     hbar(document.getElementById('leaderboard'), lbLabels, lb.slice(0, 15).reverse().map(r => r.words), '#f59e0b');

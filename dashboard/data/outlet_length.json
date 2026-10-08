@@ -1,112 +1,112 @@
 [
   {
     "outlet": "intercept",
-    "count": 20,
-    "avg": 2738.9
-  },
-  {
-    "outlet": "propublica",
-    "count": 10,
-    "avg": 1594.4
-  },
-  {
-    "outlet": "latimes",
-    "count": 132,
-    "avg": 1377.0
-  },
-  {
-    "outlet": "motherjones",
-    "count": 10,
-    "avg": 1370.7
+    "count": 23,
+    "avg": 2661.7
   },
   {
     "outlet": "vox",
-    "count": 10,
-    "avg": 1276.8
+    "count": 19,
+    "avg": 1703.3
   },
   {
-    "outlet": "nbc",
-    "count": 26,
-    "avg": 1047.3
+    "outlet": "propublica",
+    "count": 13,
+    "avg": 1504.9
   },
   {
-    "outlet": "slate",
-    "count": 25,
-    "avg": 1045.0
+    "outlet": "motherjones",
+    "count": 17,
+    "avg": 1416.8
+  },
+  {
+    "outlet": "latimes",
+    "count": 254,
+    "avg": 1317.4
   },
   {
     "outlet": "wired",
-    "count": 20,
-    "avg": 932.2
-  },
-  {
-    "outlet": "dailymail",
-    "count": 151,
-    "avg": 924.1
-  },
-  {
-    "outlet": "guardian",
-    "count": 139,
-    "avg": 850.4
+    "count": 61,
+    "avg": 1256.8
   },
   {
     "outlet": "time",
-    "count": 25,
-    "avg": 824.3
+    "count": 58,
+    "avg": 1106.8
+  },
+  {
+    "outlet": "slate",
+    "count": 56,
+    "avg": 1018.4
+  },
+  {
+    "outlet": "dailymail",
+    "count": 494,
+    "avg": 969.4
+  },
+  {
+    "outlet": "nbc",
+    "count": 72,
+    "avg": 954.1
+  },
+  {
+    "outlet": "guardian",
+    "count": 366,
+    "avg": 896.5
   },
   {
     "outlet": "bbc",
-    "count": 31,
-    "avg": 754.1
-  },
-  {
-    "outlet": "cnn",
-    "count": 193,
-    "avg": 708.8
-  },
-  {
-    "outlet": "independent",
-    "count": 100,
-    "avg": 668.6
-  },
-  {
-    "outlet": "cbs",
-    "count": 31,
-    "avg": 636.6
-  },
-  {
-    "outlet": "fox",
-    "count": 26,
-    "avg": 606.6
+    "count": 125,
+    "avg": 749.8
   },
   {
     "outlet": "nypost",
-    "count": 21,
-    "avg": 606.3
+    "count": 94,
+    "avg": 713.0
   },
   {
-    "outlet": "thesun",
-    "count": 30,
-    "avg": 516.7
+    "outlet": "cnn",
+    "count": 322,
+    "avg": 712.3
+  },
+  {
+    "outlet": "fox",
+    "count": 122,
+    "avg": 711.7
   },
   {
     "outlet": "arstechnica",
-    "count": 20,
-    "avg": 421.6
+    "count": 36,
+    "avg": 693.0
+  },
+  {
+    "outlet": "independent",
+    "count": 402,
+    "avg": 675.1
   },
   {
     "outlet": "theverge",
-    "count": 10,
-    "avg": 410.6
+    "count": 30,
+    "avg": 629.2
+  },
+  {
+    "outlet": "cbs",
+    "count": 111,
+    "avg": 605.3
+  },
+  {
+    "outlet": "thesun",
+    "count": 139,
+    "avg": 520.5
   },
   {
     "outlet": "washexaminer",
-    "count": 10,
-    "avg": 145.6
+    "count": 47,
+    "avg": 215.0
   },
   {
     "outlet": "nationalreview",
-    "count": 20,
+    "count": 34,
     "avg": 0.0
   }
 ]
