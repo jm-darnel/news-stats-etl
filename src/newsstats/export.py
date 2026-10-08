@@ -8,7 +8,7 @@ plus an ETL health line and rule-based trend insights (7/30/90 days).
 from __future__ import annotations
 
 import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 
@@ -27,7 +27,7 @@ def _health(conn) -> dict:
     sources = conn.execute("SELECT count(*) FROM outlet").fetchone()[0]
     total = conn.execute("SELECT count(*) FROM article").fetchone()[0]
 
-    age_h = (datetime.now(timezone.utc).replace(tzinfo=None) - finished).total_seconds() / 3600
+    age_h = (datetime.now(UTC).replace(tzinfo=None) - finished).total_seconds() / 3600
     if status != "ok" or age_h > 24:
         tone = "error"
     elif flagged > 0 or fails > 0:
