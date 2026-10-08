@@ -26,6 +26,8 @@ _NON_PERSON = {
     "bloomberg", "staff writers", "correspondent", "guest", "anonymous",
     "today", "today show", "wire service", "news desk", "editorial staff",
     "guardian staff reporter", "staff reporter", "senior reporter", "news reporter",
+    "fox news radio", "conde nast", "guardian community team", "via ap news wire",
+    "wire staff", "ap wire", "news wire",
 }
 
 _ROLE_PREFIXES = ("news editor", "editor", "senior", "staff writer", "contributing")
