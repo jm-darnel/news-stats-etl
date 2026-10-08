@@ -29,6 +29,17 @@ _HTML_TAG = re.compile(r"<[^>]+>")
 _NUMERIC = re.compile(r"^[\d\s\-]+$")
 _BARE_HANDLE = re.compile(r"^[a-z0-9_]{2,24}$")  # a lone lowercase token = username
 
+# desk/topic + role title ("showbusiness reporter", "health editor") = not a person
+_ROLE_ONLY = re.compile(
+    r"^[a-z]+[- ](reporter|editor|columnist|correspondent|critic|journalist|writer|reviewer"
+    r"|photographer)s?$")
+
+# sponsored-content / press-release labels
+_LABEL_WORDS = (
+    "advertis", "sponsored", "promoted content", "in association", "paid content",
+    "brand content", "content from", "content by", "press release", "promotion",
+)
+
 
 def clean_name(name: str) -> str:
     n = html.unescape(name or "")
@@ -46,6 +57,12 @@ def is_pseudo(name: str) -> bool:
         return True
     low = canonical_key(name)
     if low in _NON_PERSON or low.removeprefix("the ") in _NON_PERSON:
+        return True
+    if any(w in low for w in _LABEL_WORDS):
+        return True
+    if _ROLE_ONLY.match(low):
+        return True
+    if " " not in name and name.isupper() and len(name) > 1:  # "AUSTRALIA", "DAILY"
         return True
     return False
 

@@ -27,7 +27,9 @@ _NON_PERSON = {
     "today", "today show", "wire service", "news desk", "editorial staff",
     "guardian staff reporter", "staff reporter", "senior reporter", "news reporter",
     "fox news radio", "conde nast", "guardian community team", "via ap news wire",
-    "wire staff", "ap wire", "news wire",
+    "wire staff", "ap wire", "news wire", "daily", "the daily", "daily express",
+    "daily star", "daily telegraph", "daily mirror", "daily record", "daily beast",
+    "daily mail australia",
 }
 
 _ROLE_PREFIXES = ("news editor", "editor", "senior", "staff writer", "contributing")
