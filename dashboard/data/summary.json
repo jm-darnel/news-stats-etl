@@ -1,34 +1,36 @@
 {
-  "articles": 2895,
-  "authors": 1871,
+  "articles": 2945566,
+  "articles_forward": 4102,
+  "articles_archive": 2941464,
+  "authors": 42817,
   "outlets": 22,
   "health": {
     "status": "ok",
-    "last_run_at": "2026-10-08 12:53:04.525865",
-    "age_hours": 3.5,
-    "rows_last_run": 10,
+    "last_run_at": "2026-10-09 17:39:55.692943",
+    "age_hours": 0.1,
+    "rows_last_run": 2941464,
     "rows_flagged": 0,
     "dq_checks_failed": 0,
     "sources": 22,
-    "total_articles": 2895
+    "total_articles": 2945566
   },
   "trends": {
     "7": {
-      "articles": 5563,
-      "avg_words": 632.7,
-      "volume_pct_change": 2.0,
+      "articles": 4546,
+      "avg_words": 634.5,
+      "volume_pct_change": -17.9,
       "top_outlet": "nypost"
     },
     "30": {
-      "articles": 25452,
-      "avg_words": 638.0,
-      "volume_pct_change": -7.0,
+      "articles": 24445,
+      "avg_words": 639.3,
+      "volume_pct_change": -12.2,
       "top_outlet": "nypost"
     },
     "90": {
-      "articles": 82063,
-      "avg_words": 636.3,
-      "volume_pct_change": -19.3,
+      "articles": 80957,
+      "avg_words": 636.8,
+      "volume_pct_change": -20.5,
       "top_outlet": "nypost"
     }
   }

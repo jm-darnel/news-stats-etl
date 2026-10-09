@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>news-stats — article volume, length, and authorship</title>
+<title>news-stats: article volume, length, and authorship</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <style>
   :root { --fg:#1a1a2e; --muted:#6b7280; --bg:#fafafa; --card:#ffffff; --accent:#4f46e5; --border:#e5e7eb; }
@@ -24,7 +24,8 @@
   @media (max-width:820px){ .grid { grid-template-columns:1fr; } }
   .card { background:var(--card); border:1px solid var(--border); border-radius:10px; padding:18px; }
   .card h2 { margin:0 0 12px; font-size:15px; font-weight:600; color:var(--muted); }
-  .chart-head { display:flex; justify-content:space-between; align-items:center; margin:0 0 12px; }
+  .src { font: 500 11px/1.4 var(--mono, monospace); color: #8b8f98; border: 1px solid #e5e7eb; border-radius: 999px; padding: 2px 8px; vertical-align: middle; }
+.chart-head { display:flex; justify-content:space-between; align-items:center; margin:0 0 12px; }
   .chart-head h2 { margin:0; }
   .range { font-size:12px; padding:4px 6px; border:1px solid var(--border); border-radius:6px; background:var(--card); color:var(--fg); }
   .card .wrap { position:relative; height:280px; }
@@ -57,34 +58,34 @@
   <div class="grid">
     <div class="card" style="grid-column:1/-1;">
       <div class="chart-head">
-        <h2>Article volume — 5-year history (GDELT backfill)</h2>
+        <h2>Article volume, 5-year history <span class="src">GDELT archive</span></h2>
         <select class="range" id="range-hvol"></select>
       </div>
       <div class="wrap"><canvas id="history-volume"></canvas></div>
     </div>
     <div class="card" style="grid-column:1/-1;">
       <div class="chart-head">
-        <h2>Average article length — 5-year history</h2>
+        <h2>Average article length, 5-year history <span class="src">GDELT archive</span></h2>
         <select class="range" id="range-hlen"></select>
       </div>
       <div class="wrap"><canvas id="history-length"></canvas></div>
     </div>
     <div class="card">
       <div class="chart-head">
-        <h2>Article volume over time</h2>
+        <h2>Article volume over time <span class="src">forward RSS/sitemap</span></h2>
         <select class="range" id="range-vol"></select>
       </div>
       <div class="wrap"><canvas id="volume"></canvas></div>
     </div>
     <div class="card">
       <div class="chart-head">
-        <h2>Average article length over time</h2>
+        <h2>Average article length over time <span class="src">forward RSS/sitemap</span></h2>
         <select class="range" id="range-len"></select>
       </div>
       <div class="wrap"><canvas id="length"></canvas></div>
     </div>
-    <div class="card"><h2>Author leaderboard (30 days)</h2><div class="wrap"><canvas id="leaderboard"></canvas></div></div>
-    <div class="card"><h2>Average length by outlet</h2><div class="wrap"><canvas id="outlet-length"></canvas></div></div>
+    <div class="card"><h2>Author leaderboard, 30 days <span class="src">archive + forward</span></h2><div class="wrap"><canvas id="leaderboard"></canvas></div></div>
+    <div class="card"><h2>Average length by outlet <span class="src">GDELT archive, 5-year</span></h2><div class="wrap"><canvas id="outlet-length"></canvas></div></div>
     <div class="card chat-card">
       <h2>Trends (last 7 / 30 / 90 days)</h2>
       <div id="trends"></div>
@@ -101,7 +102,7 @@
     </div>
   </div>
 </main>
-<div class="foot">Words are whitespace tokens of the extracted article body. 5-year history (Oct 2021–present) is a GDELT backfill covering 21 of 22 outlets — National Review isn't in GDELT's archive (forward RSS fills it going forward).</div>
+<div class="foot">Two word-count sources, never blended: <strong>forward</strong> rows are whitespace tokens of the trafilatura-extracted body (RSS/news sitemap discovery); <strong>archive</strong> rows are GDELT GKG <code>wc:</code> counts, covering Oct 2021 to present across 21 of 22 outlets (National Review is not in GDELT's archive; forward RSS fills it going forward). Each chart is labeled with the source it plots.</div>
 
 <script>
 const j = (f) => fetch(`data/${f}.json`).then(r => r.json());
@@ -179,7 +180,7 @@ Promise.all([j('summary'), j('volume'), j('length'), j('leaderboard'), j('outlet
     const blurb = (w, x) => {
       const d = x.volume_pct_change;
       const dir = d == null ? '' : (d >= 0 ? `up ${d}%` : `down ${Math.abs(d)}%`);
-      return `<p><strong>${w} days:</strong> ${x.articles.toLocaleString()} articles, avg ${x.avg_words} words, ${x.top_outlet} leads${dir ? ' — volume ' + dir + ' vs the prior ' + w + ' days' : ''}.</p>`;
+      return `<p><strong>${w} days:</strong> ${x.articles.toLocaleString()} articles, avg ${x.avg_words} words, ${x.top_outlet} leads${dir ? ', volume ' + dir + ' vs the prior ' + w + ' days' : ''}.</p>`;
     };
     document.getElementById('trends').innerHTML =
       ['7','30','90'].map(w => t[w] ? blurb(w, t[w]) : '').join('');

@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>news-stats — Variant 3 · Editorial Case Study</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --ink: rgba(0,0,0,0.95); --warm-white: #f6f5f4; --gray-500: #615d59; --gray-300: #a39e98;
+    --blue: #0075de; --whisper: 1px solid rgba(0,0,0,0.1);
+    --card-shadow: rgba(0,0,0,0.04) 0px 4px 18px, rgba(0,0,0,0.027) 0px 2.025px 7.85px, rgba(0,0,0,0.02) 0px 0.8px 2.93px, rgba(0,0,0,0.01) 0px 0.175px 1.04px;
+  }
+  body { font-family: 'Inter', -apple-system, system-ui, 'Segoe UI', Helvetica, sans-serif;
+         background: #ffffff; color: var(--ink); line-height: 1.55; -webkit-font-smoothing: antialiased; }
+
+  nav { position: sticky; top: 0; background: #fff; border-bottom: var(--whisper); padding: 12px 32px;
+        display: flex; align-items: center; justify-content: space-between; z-index: 10; }
+  nav .brand { display: flex; align-items: center; gap: 9px; font-weight: 600; font-size: 15px; }
+  nav .brand .mark { width: 22px; height: 22px; border-radius: 5px; background: var(--blue); color: #fff;
+                     display: grid; place-items: center; font-size: 12px; font-weight: 700; }
+  nav .links { display: flex; gap: 22px; }
+  nav a { font-size: 14px; font-weight: 500; color: var(--gray-500); text-decoration: none; }
+  nav a:hover { color: var(--ink); }
+
+  .wrap { max-width: 760px; margin: 0 auto; padding: 0 32px; }
+
+  header.lede { padding: 64px 0 40px; border-bottom: var(--whisper); }
+  header.lede .kicker { font-size: 13px; font-weight: 600; letter-spacing: 0.3px; text-transform: uppercase; color: var(--blue); }
+  header.lede h1 { font-size: 42px; font-weight: 700; letter-spacing: -1.2px; line-height: 1.12; margin: 14px 0 16px; }
+  header.lede .deck { font-size: 19px; color: var(--gray-500); line-height: 1.55; max-width: 620px; }
+  header.lede .meta { margin-top: 20px; font-size: 14px; color: var(--gray-300); }
+
+  section { padding: 48px 0; }
+  section:nth-of-type(even) { background: var(--warm-white); }
+  section .inner { max-width: 760px; margin: 0 auto; padding: 0 32px; }
+  section h2 { font-size: 26px; font-weight: 700; letter-spacing: -0.6px; margin-bottom: 14px; }
+  section p { font-size: 17px; line-height: 1.7; color: #33322f; margin-bottom: 16px; }
+  section p strong { color: var(--ink); }
+
+  .figure { box-shadow: var(--card-shadow); border-radius: 12px; padding: 22px; margin: 22px 0; background: #fff; }
+  .figure .cap { font-size: 13px; color: var(--gray-500); margin-bottom: 14px; font-weight: 500; }
+
+  .metric-band { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .metric { text-align: left; }
+  .metric .n { font-size: 34px; font-weight: 700; letter-spacing: -1px; }
+  .metric .l { font-size: 13px; color: var(--gray-500); margin-top: 3px; }
+
+  .spark { display: block; width: 100%; height: 180px; }
+  .bars { display: flex; flex-direction: column; gap: 10px; }
+  .bar-row { display: grid; grid-template-columns: 160px 1fr 60px; align-items: center; gap: 10px; font-size: 13px; }
+  .bar-row .name { color: var(--gray-500); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .bar-row .track { height: 9px; background: #f1efed; border-radius: 5px; overflow: hidden; }
+  .bar-row .fill { height: 100%; background: var(--blue); border-radius: 5px; }
+  .bar-row .val { text-align: right; color: var(--gray-300); font-variant-numeric: tabular-nums; }
+
+  .steps { counter-reset: s; display: flex; flex-direction: column; gap: 18px; margin: 20px 0; }
+  .step { display: grid; grid-template-columns: 34px 1fr; gap: 14px; align-items: start; }
+  .step .num { width: 30px; height: 30px; border-radius: 50%; background: var(--blue); color: #fff;
+               display: grid; place-items: center; font-size: 14px; font-weight: 600; }
+  .step h3 { font-size: 16px; font-weight: 600; margin-bottom: 3px; }
+  .step p { font-size: 15px; color: var(--gray-500); margin: 0; line-height: 1.6; }
+
+  footer { padding: 40px 0 64px; border-top: var(--whisper); }
+  footer .inner { max-width: 760px; margin: 0 auto; padding: 0 32px; font-size: 14px; color: var(--gray-500); }
+
+  @media (max-width: 640px) { .metric-band { grid-template-columns: 1fr; } header.lede h1 { font-size: 32px; } .bar-row { grid-template-columns: 110px 1fr 50px; } }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="brand"><span class="mark">ns</span> Jonah Darnel · data engineer</div>
+  <div class="links"><a href="#">Work</a><a href="#">About</a><a href="#" style="color:var(--blue)">Contact</a></div>
+</nav>
+
+<header class="lede">
+  <div class="wrap">
+    <div class="kicker">Case study · freelance portfolio</div>
+    <h1>Five years of news, modeled into a warehouse any team can query.</h1>
+    <p class="deck">I wanted a portfolio piece that proved the whole loop: scrape messy public data, model it cleanly, and leave it usable by the tools a client's org already runs.</p>
+    <div class="meta">Jonah Darnel · Oct 2021–present · DuckDB · MotherDuck · Vercel</div>
+  </div>
+</header>
+
+<section>
+  <div class="inner">
+    <h2>The result, up front</h2>
+    <div class="metric-band">
+      <div class="metric"><div class="n">2.95M</div><div class="l">articles ingested</div></div>
+      <div class="metric"><div class="n">39.8K</div><div class="l">authors canonicalized</div></div>
+      <div class="metric"><div class="n">22</div><div class="l">outlets, one schema</div></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="inner">
+    <h2>The problem</h2>
+    <p>Twenty-two outlets publish at wildly different volumes, with different byline conventions, URL shapes, and paywalls. "TODAY," "Guardian staff reporter," and <code>&lt;a href&gt;</code>-wrapped CNN bylines are all pseudo-authors — real metadata trapped in label noise. The question was whether I could reduce all of it to <strong>one clean schema</strong> without per-source hacks.</p>
+    <div class="figure">
+      <div class="cap">Daily article volume across the full window — peak of 5,458 on Nov 16, 2023.</div>
+      <svg class="spark" id="line1" preserveAspectRatio="none"></svg>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="inner">
+    <h2>How it was built</h2>
+    <div class="steps">
+      <div class="step"><div class="num">1</div><div><h3>Config-driven ingestion</h3><p>One <code>sources.yaml</code> drives every outlet. RSS/sitemap discovery plus trafilatura extraction, no per-source code.</p></div></div>
+      <div class="step"><div class="num">2</div><div><h3>dbt-style marts</h3><p>Staging → conformed dimension tables (<code>dim_outlet</code>, <code>dim_author</code>) → aggregate views. The modeling layer is what a BI tool actually consumes.</p></div></div>
+      <div class="step"><div class="num">3</div><div><h3>Five-year backfill</h3><p>Streamed ~800 GB of GDELT GKG, kept only 22-domain matches (~1–2 GB), filtered garbage dates, landed 2.95M rows locally.</p></div></div>
+      <div class="step"><div class="num">4</div><div><h3>Author resolution</h3><p>Deterministic canonicalization (accent folding, pseudo-author removal) plus a one-off LLM pass to merge surname-block aliases — 71.6K bylines → 39.8K authors.</p></div></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="inner">
+    <h2>What the data says</h2>
+    <p>Average article length separates analysis sites from tabloid wire copy clearly — worth a glance before you trust any "who writes more" comparison.</p>
+    <div class="figure">
+      <div class="cap">Average words per article, by outlet.</div>
+      <div class="bars" id="outlets"></div>
+    </div>
+    <p style="margin-top:20px">And the top bylines are exactly who you'd expect from tabloid volume — <strong>Heidi Parker</strong> and <strong>Amelia Wynne</strong> of the Daily Mail lead total words over 30 days.</p>
+  </div>
+</section>
+
+<footer>
+  <div class="inner">Built by Jonah Darnel — MIT '22, ex-McKinsey &amp; Scale AI. <a href="#" style="color:var(--blue)">Hire me for data pipelines, warehousing, and analytics.</a></div>
+</footer>
+
+<script>
+const history=[3100,3300,3550,3800,4100,4400,4700,5050,5350,5458,5400,5200,4950,4700,4450,4250,4080,3900,3750,3600,3480,3350,3250,3180];
+const outletData=[["The Intercept",2739],["Jacobin",1180],["The Guardian",932],["Politico",870],["CNN",704],["Fox News",607],["New York Post",588],["Daily Mail",522]];
+
+function drawLine(el,data,color){const w=900,h=180,pad=8,max=Math.max(...data),min=Math.min(...data);
+  const pts=data.map((v,i)=>[pad+i*(w-2*pad)/(data.length-1),h-pad-(v-min)/(max-min)*(h-2*pad)]);
+  const path=pts.map((p,i)=>(i?"L":"M")+p[0].toFixed(1)+","+p[1].toFixed(1)).join(" ");
+  const area=path+" L"+pts[pts.length-1][0].toFixed(1)+","+(h-pad)+" L"+pts[0][0].toFixed(1)+","+(h-pad)+" Z";
+  el.innerHTML='<path d="'+area+'" fill="'+color+'" opacity="0.08"/><path d="'+path+'" fill="none" stroke="'+color+'" stroke-width="2" stroke-linejoin="round"/>';}
+function drawBars(el,rows,color){const max=Math.max(...rows.map(r=>r[1]));
+  el.innerHTML=rows.map(r=>'<div class="bar-row"><div class="name">'+r[0]+'</div><div class="track"><div class="fill" style="width:'+(r[1]/max*100).toFixed(0)+'%;background:'+color+'"></div></div><div class="val">'+r[1].toLocaleString()+'</div></div>').join("");}
+
+drawLine(document.getElementById('line1'),history,'#0075de');
+drawBars(document.getElementById('outlets'),outletData,'#0075de');
+
+// interactive: click any bar row to reveal a tooltip-like detail line
+document.querySelectorAll('.bar-row').forEach(row=>{
+  row.style.cursor='pointer';
+  row.onclick=()=>{ row.querySelector('.val').textContent += ' ✓'; setTimeout(()=>{
+    row.querySelector('.val').textContent = row.querySelector('.val').textContent.replace(' ✓',''); }, 800); };
+});
+</script>
+</body>
+</html>

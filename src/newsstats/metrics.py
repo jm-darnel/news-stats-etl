@@ -17,7 +17,15 @@ _MARTS: list[tuple[str, str]] = [
         CREATE OR REPLACE VIEW dim_outlet AS
         SELECT o.outlet_id, o.name, o.domain,
                count(a.article_id) AS article_count,
-               round(avg(a.word_count), 1) AS avg_word_count
+               round(avg(a.word_count), 1) AS avg_word_count,
+               count(a.article_id) FILTER (WHERE a.word_count_source = 'derived')
+                   AS article_count_derived,
+               count(a.article_id) FILTER (WHERE a.word_count_source = 'archive')
+                   AS article_count_archive,
+               round(avg(a.word_count) FILTER (WHERE a.word_count_source = 'derived'), 1)
+                   AS avg_word_count_derived,
+               round(avg(a.word_count) FILTER (WHERE a.word_count_source = 'archive'), 1)
+                   AS avg_word_count_archive
         FROM outlet o
         LEFT JOIN article a ON a.outlet_id = o.outlet_id
         GROUP BY o.outlet_id, o.name, o.domain
@@ -46,7 +54,19 @@ _MARTS: list[tuple[str, str]] = [
                CAST(published_at AS DATE) AS day,
                count(*) AS article_count,
                round(avg(word_count), 1) AS avg_word_count,
-               sum(word_count) AS total_words
+               sum(word_count) AS total_words,
+               count(*) FILTER (WHERE word_count_source = 'derived')
+                   AS article_count_derived,
+               count(*) FILTER (WHERE word_count_source = 'archive')
+                   AS article_count_archive,
+               round(avg(word_count) FILTER (WHERE word_count_source = 'derived'), 1)
+                   AS avg_word_count_derived,
+               round(avg(word_count) FILTER (WHERE word_count_source = 'archive'), 1)
+                   AS avg_word_count_archive,
+               sum(word_count) FILTER (WHERE word_count_source = 'derived')
+                   AS total_words_derived,
+               sum(word_count) FILTER (WHERE word_count_source = 'archive')
+                   AS total_words_archive
         FROM article
         WHERE published_at IS NOT NULL AND metric_completeness = 'full'
         GROUP BY outlet_id, CAST(published_at AS DATE)
@@ -108,8 +128,11 @@ _MARTS: list[tuple[str, str]] = [
 
 
 def _backfill_categories(conn) -> int:
+    # Forward rows only: the archive (GDELT) side carries no publisher section, so
+    # conforming it is a no-op and scanning 3M rows every build is wasted compute.
     cats = conn.execute(
-        "SELECT DISTINCT category FROM article WHERE category IS NOT NULL"
+        "SELECT DISTINCT category FROM article "
+        "WHERE category IS NOT NULL AND word_count_source = 'derived'"
     ).fetchall()
     changed = 0
     for (cat,) in cats:

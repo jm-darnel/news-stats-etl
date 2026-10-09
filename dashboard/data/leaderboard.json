@@ -1,122 +1,122 @@
 [
   {
-    "author": "The Intercept Briefing",
-    "outlet": "intercept",
-    "articles": 2,
-    "words": 15366
+    "author": "Nilay Patel",
+    "outlet": "theverge",
+    "articles": 12,
+    "words": 79668
   },
   {
-    "author": "Frank Andrews",
-    "outlet": "cbs",
-    "articles": 2,
-    "words": 15160
+    "author": "Jen\u00e9e Desmond-Harris",
+    "outlet": "slate",
+    "articles": 38,
+    "words": 49126
+  },
+  {
+    "author": "The Intercept Briefing",
+    "outlet": "intercept",
+    "articles": 5,
+    "words": 35871
+  },
+  {
+    "author": "Rich Juzwiak",
+    "outlet": "slate",
+    "articles": 24,
+    "words": 32715
+  },
+  {
+    "author": "David Wright",
+    "outlet": "cnn",
+    "articles": 21,
+    "words": 32285
+  },
+  {
+    "author": "Aaron Blake",
+    "outlet": "cnn",
+    "articles": 43,
+    "words": 32211
+  },
+  {
+    "author": "David Smith",
+    "outlet": "guardian",
+    "articles": 26,
+    "words": 31827
+  },
+  {
+    "author": "Brady Knox",
+    "outlet": "washexaminer",
+    "articles": 67,
+    "words": 31793
+  },
+  {
+    "author": "Brian Stelter",
+    "outlet": "cnn",
+    "articles": 38,
+    "words": 31072
+  },
+  {
+    "author": "Stephen Collinson",
+    "outlet": "cnn",
+    "articles": 23,
+    "words": 29448
+  },
+  {
+    "author": "Jeremy Herb",
+    "outlet": "cnn",
+    "articles": 15,
+    "words": 29368
+  },
+  {
+    "author": "Christine Bragg",
+    "outlet": "fox",
+    "articles": 12,
+    "words": 29234
+  },
+  {
+    "author": "Jessica Stoya",
+    "outlet": "slate",
+    "articles": 21,
+    "words": 28413
+  },
+  {
+    "author": "Editorial",
+    "outlet": "guardian",
+    "articles": 52,
+    "words": 28224
   },
   {
     "author": "Gloria Pazmino",
     "outlet": "cnn",
-    "articles": 5,
-    "words": 13537
+    "articles": 20,
+    "words": 27971
   },
   {
-    "author": "Holly Yan",
+    "author": "Timothy Nerozzi",
+    "outlet": "washexaminer",
+    "articles": 43,
+    "words": 26386
+  },
+  {
+    "author": "Patrick Wintour",
+    "outlet": "guardian",
+    "articles": 31,
+    "words": 25900
+  },
+  {
+    "author": "Slate Staff",
+    "outlet": "slate",
+    "articles": 5,
+    "words": 25879
+  },
+  {
+    "author": "Zachary Cohen",
     "outlet": "cnn",
-    "articles": 5,
-    "words": 13537
+    "articles": 26,
+    "words": 25461
   },
   {
-    "author": "Louryn Strampe",
-    "outlet": "wired",
-    "articles": 4,
-    "words": 12859
-  },
-  {
-    "author": "Zoe Malin",
-    "outlet": "nbc",
-    "articles": 2,
-    "words": 10910
-  },
-  {
-    "author": "Martin Robinson",
-    "outlet": "dailymail",
-    "articles": 6,
-    "words": 10144
-  },
-  {
-    "author": "Erin Deborah Waks",
-    "outlet": "dailymail",
-    "articles": 7,
-    "words": 9983
-  },
-  {
-    "author": "Eliana Silver",
-    "outlet": "dailymail",
-    "articles": 6,
-    "words": 9658
-  },
-  {
-    "author": "Aidan Radnedge",
-    "outlet": "dailymail",
-    "articles": 9,
-    "words": 9463
-  },
-  {
-    "author": "Charlotte Dean",
-    "outlet": "dailymail",
-    "articles": 11,
-    "words": 9251
-  },
-  {
-    "author": "Maanya Sachdeva",
-    "outlet": "dailymail",
-    "articles": 6,
-    "words": 9133
-  },
-  {
-    "author": "Jon Brodkin",
-    "outlet": "arstechnica",
-    "articles": 4,
-    "words": 8800
-  },
-  {
-    "author": "Joanna Crawley",
-    "outlet": "dailymail",
-    "articles": 11,
-    "words": 8644
-  },
-  {
-    "author": "Eleanor Mann",
-    "outlet": "dailymail",
-    "articles": 9,
-    "words": 8584
-  },
-  {
-    "author": "Rebecca Davison",
-    "outlet": "dailymail",
-    "articles": 8,
-    "words": 8060
-  },
-  {
-    "author": "Joe Sommerlad",
-    "outlet": "independent",
-    "articles": 10,
-    "words": 7887
-  },
-  {
-    "author": "Andrew Khouri",
-    "outlet": "latimes",
-    "articles": 6,
-    "words": 7834
-  },
-  {
-    "author": "Rebecca Whittaker",
-    "outlet": "independent",
-    "articles": 12,
-    "words": 7719
-  },
-  {
-    "author": "Miska Salemann",
-    "outlet": "nypost",
-    "articles": 2,
-    "words": 7621
+    "author": "Annie Grayer",
+    "outlet": "cnn",
+    "articles": 23,
+    "words": 24128
   }
 ]

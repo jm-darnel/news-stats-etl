@@ -82,17 +82,52 @@ def _trends(conn) -> dict:
     return out
 
 
+def _history(conn) -> dict:
+    """5-year daily series from the GDELT archive side of the conformed table.
+
+    Kept separate from the forward series on purpose: GDELT `wc:` and trafilatura
+    tokens are different measurements, so the two are never blended into one line.
+    """
+    rows = conn.execute(
+        """
+        SELECT day,
+               sum(article_count_archive) AS articles,
+               round(sum(total_words_archive)::DOUBLE / nullif(sum(article_count_archive), 0), 1) AS avg_words
+        FROM agg_outlet_daily
+        WHERE article_count_archive > 0
+        GROUP BY day
+        ORDER BY day
+        """
+    ).fetchall()
+    days = [str(r[0]) for r in rows]
+    return {
+        "summary": {
+            "articles": sum(int(r[1]) for r in rows),
+            "outlets": conn.execute(
+                "SELECT count(DISTINCT outlet_id) FROM article WHERE word_count_source = 'archive'"
+            ).fetchone()[0],
+            "start": days[0] if days else None,
+            "end": days[-1] if days else None,
+            "source": "GDELT GKG (archive word counts)",
+        },
+        "days": days,
+        "articles": [int(r[1]) for r in rows],
+        "avg_words": [float(r[2]) for r in rows],
+    }
+
+
 def export_dashboard(conn, out_dir: str | Path = "dashboard") -> dict:
     data_dir = Path(out_dir) / "data"
     data_dir.mkdir(parents=True, exist_ok=True)
 
-    # full forward series (client applies date filters)
+    # forward (derived) series: client applies date filters
     vol = conn.execute(
         """
         SELECT day,
-               sum(article_count) AS c,
-               round(sum(total_words)::DOUBLE / sum(article_count), 1) AS avg_len
+               sum(article_count_derived) AS c,
+               round(sum(total_words_derived)::DOUBLE / nullif(sum(article_count_derived), 0), 1) AS avg_len
         FROM agg_outlet_daily
+        WHERE article_count_derived > 0
         GROUP BY day
         ORDER BY day
         """
@@ -111,14 +146,22 @@ def export_dashboard(conn, out_dir: str | Path = "dashboard") -> dict:
         """
     ).fetchall()
 
+    # length by outlet over the 5-year archive (labeled as such in the dashboard)
     outlet_len = conn.execute(
-        "SELECT outlet_id, article_count, avg_word_count "
-        "FROM dim_outlet ORDER BY avg_word_count DESC"
+        "SELECT outlet_id, count(*) AS n, round(avg(word_count), 1) AS avg_words "
+        "FROM article WHERE word_count_source = 'archive' AND word_count IS NOT NULL "
+        "GROUP BY outlet_id ORDER BY avg_words DESC"
     ).fetchall()
 
     payloads = {
         "summary": {
             "articles": conn.execute("SELECT count(*) FROM article").fetchone()[0],
+            "articles_forward": conn.execute(
+                "SELECT count(*) FROM article WHERE word_count_source = 'derived'"
+            ).fetchone()[0],
+            "articles_archive": conn.execute(
+                "SELECT count(*) FROM article WHERE word_count_source = 'archive'"
+            ).fetchone()[0],
             "authors": conn.execute("SELECT count(*) FROM author").fetchone()[0],
             "outlets": conn.execute("SELECT count(*) FROM outlet").fetchone()[0],
             "health": _health(conn),
@@ -126,6 +169,7 @@ def export_dashboard(conn, out_dir: str | Path = "dashboard") -> dict:
         },
         "volume": {"days": days, "total": volumes},
         "length": {"days": days, "avg": avg_lens},
+        "history": _history(conn),
         "leaderboard": [
             {"author": r[0], "outlet": r[1], "articles": int(r[2]), "words": int(r[3])}
             for r in leaderboard

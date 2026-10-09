@@ -329,6 +329,22 @@ def parse_question_rules(question: str, valid_outlets: set[str],
     elif "month" in t and not (q.start or q.end):
         q.days = 30
 
+    # Absolute dates (a year, "in <month>", "since ...") need the language model.
+    # Answering them from rules alone would silently return the all-time total, so
+    # decline instead: an honest "I can't resolve that" beats a wrong number.
+    if q.days is None and q.start is None and q.end is None:
+        _abs = (
+            r"\b(?:19|20)\d{2}\b"
+            r"|\b(?:in|since|during|until|before|after|throughout)\s+"
+            r"(?:january|february|march|april|may|june|july|august|september|october|november|december)\b"
+            r"|\b(?:this|last|next)\s+year\b"
+        )
+        if re.search(_abs, t):
+            raise QueryError(
+                "I can't resolve that date range without the language model; from the rules "
+                'alone I only handle relative windows like "the past 30 days".'
+            )
+
     return q
 
 

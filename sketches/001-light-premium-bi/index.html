@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>news-stats — Variant 1 · Light Premium BI</title>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --black: #171717; --white: #ffffff; --gray-600: #4d4d4d; --gray-500: #666;
+    --gray-400: #808080; --gray-100: #ebebeb; --gray-50: #fafafa;
+    --ring: rgba(0,0,0,0.08) 0 0 0 1px;
+    --card: rgba(0,0,0,0.08) 0 0 0 1px, rgba(0,0,0,0.04) 0 2px 2px, #fafafa 0 0 0 1px;
+    --blue: #0a72ef; --purple: #7928ca; --pink: #eb367f;
+  }
+  body { font-family: 'Geist', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+         background: var(--white); color: var(--black); -webkit-font-smoothing: antialiased; }
+  .mono { font-family: 'Geist Mono', ui-monospace, Menlo, monospace; }
+
+  /* top bar */
+  nav { position: sticky; top: 0; background: var(--white); box-shadow: var(--ring);
+        padding: 12px 32px; display: flex; align-items: center; justify-content: space-between; z-index: 10; }
+  nav .brand { display: flex; align-items: center; gap: 10px; font-weight: 600; font-size: 15px; letter-spacing: -0.3px; }
+  nav .brand .mark { font-size: 11px; font-weight: 500; color: var(--gray-500); background: var(--gray-50);
+                     box-shadow: var(--ring); border-radius: 6px; padding: 3px 7px; }
+  nav .links { display: flex; gap: 22px; align-items: center; }
+  nav a { font-size: 14px; font-weight: 500; color: var(--gray-600); text-decoration: none; }
+  nav a:hover { color: var(--black); }
+  nav .cta { background: var(--black); color: var(--white); padding: 6px 14px; border-radius: 6px; font-size: 14px; font-weight: 500; }
+  nav .cta:hover { background: var(--gray-600); }
+
+  main { max-width: 1120px; margin: 0 auto; padding: 40px 32px 64px; }
+
+  /* header strip (identity, not a hero) */
+  header { border-bottom: 1px solid var(--gray-100); padding-bottom: 28px; margin-bottom: 28px; }
+  header .eyebrow { font-size: 12px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.4px; color: var(--gray-500); }
+  header h1 { font-size: 32px; font-weight: 600; letter-spacing: -1.28px; line-height: 1.1; margin: 6px 0 8px; }
+  header p.desc { font-size: 17px; font-weight: 400; line-height: 1.55; color: var(--gray-600); max-width: 640px; }
+  header .health { display: inline-flex; align-items: center; gap: 7px; margin-top: 14px;
+                   font-size: 13px; color: var(--gray-500); font-weight: 400; }
+  header .health .dot { width: 8px; height: 8px; border-radius: 50%; background: #16a34a; box-shadow: 0 0 0 2px #dcfce7; }
+
+  /* stat strip */
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 28px; }
+  .stat { box-shadow: var(--card); border-radius: 8px; padding: 16px 18px; }
+  .stat .n { font-size: 30px; font-weight: 600; letter-spacing: -1px; line-height: 1; }
+  .stat .l { font-size: 12px; color: var(--gray-500); margin-top: 6px; font-weight: 500; }
+
+  /* chart grid */
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .card { box-shadow: var(--card); border-radius: 10px; padding: 20px; }
+  .card.span2 { grid-column: 1 / -1; }
+  .card h2 { font-size: 15px; font-weight: 600; letter-spacing: -0.2px; margin-bottom: 2px; }
+  .card .sub { font-size: 13px; color: var(--gray-500); margin-bottom: 14px; }
+  .card .head { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 14px; }
+
+  /* segmented range toggle (interactive) */
+  .seg { display: inline-flex; box-shadow: var(--ring); border-radius: 8px; overflow: hidden; }
+  .seg button { border: 0; background: var(--white); color: var(--gray-500); font-family: inherit; font-size: 13px;
+                font-weight: 500; padding: 6px 12px; cursor: pointer; }
+  .seg button.on { background: var(--black); color: var(--white); }
+
+  .chart { width: 100%; }
+  .spark { display: block; width: 100%; height: 160px; }
+
+  /* horizontal bars */
+  .bars { display: flex; flex-direction: column; gap: 10px; }
+  .bar-row { display: grid; grid-template-columns: 150px 1fr 60px; align-items: center; gap: 10px; font-size: 13px; }
+  .bar-row .name { color: var(--gray-600); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .bar-row .track { height: 8px; background: var(--gray-50); border-radius: 4px; overflow: hidden; }
+  .bar-row .fill { height: 100%; background: var(--black); border-radius: 4px; }
+  .bar-row .val { text-align: right; color: var(--gray-500); font-variant-numeric: tabular-nums; }
+
+  /* trend blurb */
+  .trends { display: flex; flex-direction: column; gap: 14px; }
+  .trend { display: grid; grid-template-columns: 52px 1fr auto; gap: 12px; align-items: baseline; }
+  .trend .w { font-size: 13px; font-weight: 600; color: var(--gray-500); }
+  .trend .txt { font-size: 14px; color: var(--gray-600); line-height: 1.5; }
+  .trend .delta { font-size: 13px; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .up { color: #16a34a; } .down { color: #dc2626; position: relative; }
+
+  /* stack strip */
+  .stack { grid-column: 1 / -1; box-shadow: var(--ring); border-radius: 10px; padding: 18px 20px;
+           display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+  .stack .pipeline { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 12px; }
+  .stack .pipeline span { box-shadow: var(--ring); border-radius: 6px; padding: 4px 9px; font-family: 'Geist Mono', monospace; color: var(--gray-600); }
+  .stack .pipeline .arrow { color: var(--gray-400); box-shadow: none; }
+  .stack a { font-size: 13px; font-weight: 500; color: var(--blue); text-decoration: none; }
+
+  @media (max-width: 720px) { .grid, .stats { grid-template-columns: 1fr; } .bar-row { grid-template-columns: 110px 1fr 50px; } }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="brand"><span class="mark">ns</span> news-stats <span class="mono" style="color:#666;font-weight:400;font-size:12px">by Jonah Darnel</span></div>
+  <div class="links">
+    <a href="#">Case study</a><a href="#">GitHub</a><a href="#">Architecture</a>
+    <a class="cta" href="#">Ask about the data</a>
+  </div>
+</nav>
+
+<main>
+  <header>
+    <div class="eyebrow">Freelance data engineering · portfolio artifact</div>
+    <h1>Five years of news, 2.95&nbsp;million articles, one warehouse.</h1>
+    <p class="desc">A nightly pipeline scrapes 22 outlets, extracts word counts and bylines, models them dbt-style in DuckDB/MotherDuck, and serves a warehouse any BI tool can point at.</p>
+    <div class="health"><span class="dot"></span> ETL ok · 22 sources · last run 3.5h ago · 10 pulled, 0 DQ warnings</div>
+  </header>
+
+  <div class="stats">
+    <div class="stat"><div class="n">2.95M</div><div class="l">articles ingested</div></div>
+    <div class="stat"><div class="n">39.8K</div><div class="l">canonical authors</div></div>
+    <div class="stat"><div class="n">22</div><div class="l">outlets</div></div>
+    <div class="stat"><div class="n">54%</div><div class="l">byline coverage</div></div>
+  </div>
+
+  <div class="grid">
+    <div class="card span2">
+      <div class="head">
+        <div><h2>Daily article volume — 5-year history</h2><div class="sub">GDELT backfill · Oct 2021 → present</div></div>
+        <div class="seg" id="seg"></div>
+      </div>
+      <svg class="spark" id="line1" preserveAspectRatio="none"></svg>
+    </div>
+
+    <div class="card">
+      <div class="head"><div><h2>Average article length by outlet</h2><div class="sub">mean words · full corpus</div></div></div>
+      <div class="bars" id="outlets"></div>
+    </div>
+
+    <div class="card">
+      <div class="head"><div><h2>Author leaderboard — 30 days</h2><div class="sub">total words, canonical bylines</div></div></div>
+      <div class="bars" style="--fill:#7928ca" id="authors"></div>
+    </div>
+
+    <div class="card span2">
+      <div class="head"><div><h2>Trends — last 7 / 30 / 90 days</h2><div class="sub">rule-based, computed against prior window</div></div></div>
+      <div class="trends" id="trends"></div>
+    </div>
+
+    <div class="stack">
+      <div class="pipeline">
+        <span>RSS + sitemap</span><span class="arrow">→</span><span>trafilatura</span><span class="arrow">→</span><span>DuckDB</span><span class="arrow">→</span><span>dbt-style marts</span><span class="arrow">→</span><span>MotherDuck</span><span class="arrow">→</span><span>Vercel</span>
+      </div>
+      <a href="#">View the pipeline →</a>
+    </div>
+  </div>
+</main>
+
+<script>
+// --- real-ish data, hardcoded for the mockup ---
+const history = [3100,3300,3550,3800,4100,4400,4700,5050,5350,5458,5400,5200,4950,4700,4450,4250,4080,3900,3750,3600,3480,3350,3250,3180];
+const history90 = history.slice(history.length-90); // placeholder for range demo
+const outletData = [
+  ["The Intercept", 2739],["Jacobin", 1180],["The Guardian", 932],["Politico", 870],
+  ["CNN", 704],["Fox News", 607],["New York Post", 588],["Daily Mail", 522],
+];
+const authorData = [
+  ["Heidi Parker (Daily Mail)", 314000],["Amelia Wynne (Daily Mail)", 287000],
+  ["Rebecca Whittaker", 201000],["Charlotte Dean", 174000],["Jake Tapper (CNN)", 96000],
+];
+
+function drawLine(el, data, color){
+  const w = 900, h = 160, pad = 6;
+  const max = Math.max(...data), min = Math.min(...data);
+  const pts = data.map((v,i)=>[pad + i*(w-2*pad)/(data.length-1), h - pad - (v-min)/(max-min)*(h-2*pad)]);
+  const path = pts.map((p,i)=>(i?"L":"M")+p[0].toFixed(1)+","+p[1].toFixed(1)).join(" ");
+  const area = path + " L" + pts[pts.length-1][0].toFixed(1)+","+(h-pad) + " L"+pts[0][0].toFixed(1)+","+(h-pad)+" Z";
+  el.innerHTML =
+    '<path d="'+area+'" fill="'+color+'" opacity="0.08"/>' +
+    '<path d="'+path+'" fill="none" stroke="'+color+'" stroke-width="1.5" stroke-linejoin="round"/>';
+  for(const p of [pts[0], pts[pts.length-1]]){
+    el.innerHTML += '<circle cx="'+p[0].toFixed(1)+'" cy="'+p[1].toFixed(1)+'" r="2.5" fill="'+color+'"/>';
+  }
+}
+
+function drawBars(el, rows, color){
+  const max = Math.max(...rows.map(r=>r[1]));
+  el.innerHTML = rows.map(r =>
+    '<div class="bar-row"><div class="name">'+r[0]+'</div>' +
+    '<div class="track"><div class="fill" style="width:'+(r[1]/max*100).toFixed(0)+'%;background:'+color+'"></div></div>' +
+    '<div class="val">'+r[1].toLocaleString()+'</div></div>'
+  ).join("");
+}
+
+// --- render ---
+drawLine(document.getElementById('line1'), history, '#171717');
+drawBars(document.getElementById('outlets'), outletData, '#0a72ef');
+drawBars(document.getElementById('authors'), authorData, '#7928ca');
+
+const trends = [
+  ["7d", "5,563 articles · avg 632.7 words · nypost leads volume", "+2%", "up"],
+  ["30d", "25,452 articles · avg 641.2 words · stability across outlets", "−7%", "down"],
+  ["90d", "82,063 articles · avg 638.9 words · decline driven by CNN dip", "−19.3%", "down"],
+];
+document.getElementById('trends').innerHTML = trends.map(t =>
+  '<div class="trend"><span class="w">'+t[0]+'</span><span class="txt">'+t[1]+'</span><span class="delta '+t[3]+'">'+t[2]+'</span></div>'
+).join("");
+
+// --- interactive: date-range toggle re-renders the line (state transition) ---
+const ranges = { "7d": 7, "90d": 90, "1y": 365, "5y": 1825 };
+const seg = document.getElementById('seg');
+Object.keys(ranges).forEach((k,i)=>{
+  const b = document.createElement('button');
+  b.textContent = k;
+  if(k==="5y") b.className = "on";
+  b.onclick = () => {
+    seg.querySelectorAll('button').forEach(x=>x.classList.remove('on'));
+    b.classList.add('on');
+    const n = Math.max(8, Math.min(ranges[k], history.length));
+    drawLine(document.getElementById('line1'), history.slice(-n), '#171717');
+  };
+  seg.appendChild(b);
+});
+</script>
+</body>
+</html>

@@ -126,6 +126,20 @@ def test_rejects_individual_article_superlative():
                                   {"cnn", "fox"}, set())
 
 
+def test_rules_decline_absolute_dates():
+    """Without the LLM, an absolute date must decline rather than answer the all-time total."""
+    for q in ("how many articles in 2023",
+              "how many articles in September 2025",
+              "articles published since 2022",
+              "total words this year"):
+        with pytest.raises(QueryError):
+            chat.parse_question_rules(q, {"cnn", "fox"}, set())
+
+    # relative windows still parse
+    q = chat.parse_question_rules("how many articles over the past 90 days", {"cnn"}, set())
+    assert q.days == 90
+
+
 def test_llm_failure_falls_back_to_rules(conn):
     def bad_llm(prompt: str) -> str:
         raise RuntimeError("llm down")
