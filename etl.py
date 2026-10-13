@@ -27,12 +27,13 @@ def run_source(conn, source, limit: int | None, dry_run: bool) -> int:
             rows.append(normalize.to_canonical(d, ex, source, seen_at=started))
         except Exception as e:  # noqa: BLE001 - keep the run going, log the skip
             print(f"  skip {d.url}: {type(e).__name__}: {e}")
+    written = 0
     if not dry_run:
         checks = dq.run_checks(source, rows, len(discovered))
         flagged = sum(1 for c in checks if not c.passed)
         if rows:
-            load.upsert(conn, source, rows, run_id, started)
-        load.record_run(conn, run_id, started, len(rows), flagged)
+            written = load.upsert(conn, source, rows, run_id, started)
+        load.record_run(conn, run_id, started, written, flagged)
         load.write_dq(conn, run_id, checks)
     else:
         flagged = 0
@@ -43,8 +44,8 @@ def run_source(conn, source, limit: int | None, dry_run: bool) -> int:
                 f"    {r.outlet_id:14} wc={r.word_count:>6} conf={r.extraction_confidence:.2f} "
                 f"cat={cat:18} authors={r.authors}"
             )
-    print(f"    -> {len(rows)} rows, {flagged} flag(s)")
-    return len(rows)
+    print(f"    -> {written} new (of {len(rows)} seen), {flagged} flag(s)")
+    return written
 
 
 def main() -> None:

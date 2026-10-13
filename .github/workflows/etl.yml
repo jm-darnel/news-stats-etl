@@ -2,7 +2,7 @@ name: etl
 
 on:
   schedule:
-    - cron: "0 */6 * * *"   # every 6 hours
+    - cron: "0 0 */3 * *"   # every 72 hours
   workflow_dispatch: {}      # manual run from the Actions tab
 
 jobs:
@@ -19,4 +19,4 @@ jobs:
         env:
           NEWSSTATS_DB_URL: md:newsstats
           motherduck_token: ${{ secrets.MOTHERDUCK_TOKEN }}
-        run: python etl.py
+        run: python etl.py --limit 200

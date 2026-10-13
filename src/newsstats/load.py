@@ -74,34 +74,57 @@ def upsert(conn, source: SourceConfig, rows: list[CanonicalArticle], run_id: str
         " ON CONFLICT (outlet_id) DO NOTHING",
         [source.outlet_id, source.name, source.domain, source.discovery, source.feed_url, source.notes],
     )
-    for r in rows:
-        conn.execute(
-            """INSERT INTO article (article_id,outlet_id,url,title,published_at,category,language,
-                   word_count,word_count_source,metric_completeness,source_type,extraction_method,
-                   extraction_confidence,first_seen_at,last_seen_at)
-               VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
-               ON CONFLICT (article_id) DO UPDATE SET last_seen_at=excluded.last_seen_at,
-                   word_count=excluded.word_count, extraction_confidence=excluded.extraction_confidence""",
-            [
+    # Batched writes: one executemany per table, not one execute per row. A feed
+    # re-discovery returns the same URLs every run, and article_id is a URL hash,
+    # so we de-dupe against what's already ingested and write only the new rows.
+    ids = list({r.article_id for r in rows})
+    existing = {
+        r[0]
+        for r in conn.execute(
+            "SELECT article_id FROM article WHERE article_id IN (SELECT unnest(?))", [ids]
+        ).fetchall()
+    }
+    fresh = [r for r in rows if r.article_id not in existing]
+    if not fresh:
+        return 0
+
+    conn.executemany(
+        "INSERT INTO article (article_id,outlet_id,url,title,published_at,category,language,"
+        " word_count,word_count_source,metric_completeness,source_type,extraction_method,"
+        " extraction_confidence,first_seen_at,last_seen_at)"
+        " VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)"
+        " ON CONFLICT (article_id) DO NOTHING",
+        [
+            (
                 r.article_id, r.outlet_id, r.url, r.title, _to_ts(r.published_at), r.category,
                 r.language, r.word_count, r.word_count_source, r.metric_completeness, r.source_type,
                 r.extraction_method, r.extraction_confidence, _to_ts(r.first_seen_at), _to_ts(r.last_seen_at),
-            ],
-        )
+            )
+            for r in fresh
+        ],
+    )
+
+    author_rows: list[tuple] = []
+    link_rows: list[tuple] = []
+    for r in fresh:
         for order, name in enumerate(r.authors):
             aid = author_id_for(r.outlet_id, name)
-            conn.execute(
-                "INSERT INTO author (author_id,outlet_id,canonical_name,first_seen_at,last_seen_at)"
-                " VALUES (?,?,?,?,?) ON CONFLICT (author_id)"
-                " DO UPDATE SET last_seen_at=excluded.last_seen_at",
-                [aid, r.outlet_id, name, _to_ts(r.first_seen_at), _to_ts(r.last_seen_at)],
-            )
-            conn.execute(
-                "INSERT INTO article_author (article_id,author_id,author_order) VALUES (?,?,?)"
-                " ON CONFLICT DO NOTHING",
-                [r.article_id, aid, order],
-            )
-    return len(rows)
+            author_rows.append((aid, r.outlet_id, name, _to_ts(r.first_seen_at), _to_ts(r.last_seen_at)))
+            link_rows.append((r.article_id, aid, order))
+    if author_rows:
+        conn.executemany(
+            "INSERT INTO author (author_id,outlet_id,canonical_name,first_seen_at,last_seen_at)"
+            " VALUES (?,?,?,?,?) ON CONFLICT (author_id)"
+            " DO UPDATE SET last_seen_at=excluded.last_seen_at",
+            author_rows,
+        )
+    if link_rows:
+        conn.executemany(
+            "INSERT INTO article_author (article_id,author_id,author_order) VALUES (?,?,?)"
+            " ON CONFLICT DO NOTHING",
+            link_rows,
+        )
+    return len(fresh)
 
 
 def record_run(
