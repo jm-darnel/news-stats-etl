@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>news-stats — N1 · Broadsheet</title>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600;6..72,700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  :root { --ink:#111; --body:#333; --muted:#767676; --rule:#e0e0e0; --blue:#0a72ef; --green:#16a34a; --red:#dc2626; }
+  body { font-family:'Inter',-apple-system,system-ui,sans-serif; background:#fff; color:var(--ink); -webkit-font-smoothing:antialiased; }
+  .serif { font-family:'Newsreader', Georgia, 'Times New Roman', serif; }
+
+  /* utility strip */
+  .utility { display:flex; justify-content:space-between; align-items:center; font-size:11px; color:var(--muted);
+             padding: 10px 22px; border-bottom:1px solid var(--rule); letter-spacing:.2px; }
+  .utility .left { display:flex; gap:14px; }
+  .utility .right { display:flex; gap:14px; }
+  .utility .ticker span { margin-right:2px; } .ticker .up { color:var(--green); } .ticker .down { color:var(--red); }
+
+  /* masthead */
+  .masthead { text-align:center; padding: 20px 22px 14px; }
+  .masthead h1 { font-family:'Newsreader',serif; font-weight:700; font-size:44px; letter-spacing:-0.5px; }
+  .masthead .sub { font-size:12px; color:var(--muted); letter-spacing:1px; text-transform:uppercase; margin-top:2px; }
+
+  /* nav */
+  .nav { display:flex; justify-content:center; gap:20px; padding:10px 22px; border-top:2px solid var(--ink); border-bottom:1px solid var(--ink); }
+  .nav a { font-size:13px; font-weight:500; color:var(--ink); text-decoration:none; }
+  .nav a.on { border-bottom:2px solid var(--ink); }
+  .nav a:not(.on):hover { color:var(--muted); }
+
+  main { max-width:1180px; margin:0 auto; padding:18px 24px 40px; }
+
+  /* newspaper grid: thick rules between columns */
+  .page { display:grid; grid-template-columns:1fr 1.4fr 1fr; gap:0; border-top:1px solid var(--rule); }
+  .col { padding:18px 16px; border-right:1px solid var(--rule); }
+  .col:last-child { border-right:0; }
+
+  .kicker { font-size:11px; font-weight:600; letter-spacing:1px; text-transform:uppercase; color:var(--muted); }
+  .story h3 { font-family:'Newsreader',serif; font-weight:600; font-size:21px; line-height:1.15; margin:5px 0 6px; }
+  .story p { font-size:13.5px; line-height:1.5; color:var(--body); }
+  .meta { font-size:11px; color:var(--muted); margin-top:7px; }
+
+  .rule { border-top:1px solid var(--ink); margin:14px 0 12px; }
+  .rule.double { border-top:3px double var(--ink); }
+
+  .chart { width:100%; display:block; }
+  .spark { display:block; width:100%; height:120px; }
+
+  /* leader/laggard mini-table */
+  table { width:100%; border-collapse:collapse; font-size:12px; }
+  th { text-align:left; font-weight:500; color:var(--muted); font-size:10.5px; letter-spacing:.5px; padding:4px 6px; border-bottom:1px solid var(--rule); }
+  th.num, td.num { text-align:right; font-variant-numeric:tabular-nums; }
+  td { padding:5px 6px; border-bottom:1px solid #f2f2f2; }
+  td .sym { font-weight:600; }
+  .up { color:var(--green); } .down { color:var(--red); }
+
+  .stat-row { display:flex; justify-content:space-between; font-size:12px; padding:5px 0; border-bottom:1px solid #f2f2f2; }
+  .stat-row b { font-variant-numeric:tabular-nums; font-size:13px; }
+
+  .bars { display:flex; flex-direction:column; gap:8px; }
+  .bar { display:grid; grid-template-columns:120px 1fr auto; gap:8px; align-items:center; font-size:11.5px; }
+  .bar .track { height:7px; background:#f2f2f2; border-radius:2px; }
+  .bar .fill { height:100%; background:var(--ink); }
+
+  @media (max-width:840px){ .page { grid-template-columns:1fr; } .col { border-right:0; border-bottom:1px solid var(--rule); } }
+</style>
+</head>
+<body>
+
+<div class="utility">
+  <div class="left">Friday, October 9, 2026 · Today's Data</div>
+  <div class="right ticker">
+    <span>Articles <span class="down">−19.3%</span>/90d</span>
+    <span>Forward refresh <span class="up">3.5h ago</span></span>
+    <span>Sources 22</span>
+  </div>
+</div>
+
+<div class="masthead">
+  <h1>news-stats</h1>
+  <div class="sub">The analytics edition · five years of news, one warehouse</div>
+</div>
+
+<nav class="nav">
+  <a href="#" class="on">Front</a><a href="#">Volume</a><a href="#">Length</a><a href="#">Authors</a><a href="#">Outlets</a><a href="#">Ask the data</a>
+</nav>
+
+<main>
+  <div class="page">
+
+    <!-- COL 1 -->
+    <div class="col">
+      <div class="story">
+        <div class="kicker">The lead</div>
+        <h3>A warehouse that answers questions, not just one that holds rows.</h3>
+        <p>2.95M articles from 22 outlets, extracted, modeled dbt-style, and queryable by any BI tool that speaks Postgres.</p>
+        <div class="meta">M7 · by Jonah Darnel · 4 min</div>
+      </div>
+
+      <div class="rule double"></div>
+
+      <div class="kicker">Key figures</div>
+      <div class="stat-row"><span>Articles</span><b>2,951,000</b></div>
+      <div class="stat-row"><span>Canonical authors</span><b>39,801</b></div>
+      <div class="stat-row"><span>Outlets</span><b>22</b></div>
+      <div class="stat-row"><span>Byline coverage</span><b>54%</b></div>
+
+      <div class="rule"></div>
+
+      <div class="story">
+        <div class="kicker">Trends</div>
+        <h3>Volume is easing off a 2023 peak.</h3>
+        <p>Daily output peaked at 5,458 articles (Nov 16, 2023) and has drifted down since — partly a coverage dip, not just a quieter news cycle.</p>
+        <div class="meta">7d +2% · 30d −7% · 90d −19.3%</div>
+      </div>
+    </div>
+
+    <!-- COL 2 (hero chart) -->
+    <div class="col">
+      <div class="story">
+        <div class="kicker">Volume · five-year history</div>
+        <h3>The shape of 2.95 million articles.</h3>
+        <svg class="spark" id="lead" preserveAspectRatio="none"></svg>
+        <p>Daily volume climbed through 2022, crested in late 2023, and settled into a lower band. The line is real GDELT backfill, not a drawn impression.</p>
+        <div class="meta">GDELT GKG · Oct 2021 → present · <span class="serif" style="color:var(--blue)">7d / 30d / 1y / 5y</span></div>
+      </div>
+
+      <div class="rule"></div>
+
+      <div class="kicker">Length, by outlet</div>
+      <h3 style="font-family:'Newsreader',serif;font-weight:600;font-size:18px;margin:5px 0 10px">Long-form sits five times heavier than tabloid wire copy.</h3>
+      <div class="bars" id="outlets"></div>
+    </div>
+
+    <!-- COL 3 -->
+    <div class="col">
+      <div class="kicker">Authors · 30 days</div>
+      <h3 style="font-family:'Newsreader',serif;font-weight:600;font-size:18px;margin:5px 0 10px">The bylines moving the most words.</h3>
+      <div class="bars" id="authors" style="--fill:#111"></div>
+
+      <div class="rule double"></div>
+
+      <div class="kicker">Outlets — movers</div>
+      <table>
+        <thead><tr><th>OUTLET</th><th class="num">ARTICLES</th><th class="num">Δ 7D</th></tr></thead>
+        <tbody id="movers"></tbody>
+      </table>
+
+      <div class="rule"></div>
+      <p style="font-size:11.5px;color:var(--muted);line-height:1.5">National Review is in the forward feed but absent from GDELT's archive — the one source the five-year machine can't reach.</p>
+    </div>
+
+  </div>
+</main>
+
+<script>
+const history=[3100,3300,3550,3800,4100,4400,4700,5050,5350,5458,5400,5200,4950,4700,4450,4250,4080,3900,3750,3600,3480,3350,3250,3180];
+const outlets=[["The Intercept",2739],["Jacobin",1180],["The Guardian",932],["Politico",870],["CNN",704],["Fox News",607],["New York Post",588],["Daily Mail",522]];
+const authors=[["Heidi Parker",314000],["Amelia Wynne",287000],["Rebecca Whittaker",201000],["Charlotte Dean",174000],["Jake Tapper",96000]];
+const movers=[["CNN",12400,"down"],["Fox News",7810,"down"],["NY Post",9210,"up"],["Guardian",6840,"up"]];
+
+function line(el,data,color){const w=900,h=120,pad=4,max=Math.max(...data),min=Math.min(...data);
+  const pts=data.map((v,i)=>[pad+i*(w-2*pad)/(data.length-1),h-pad-(v-min)/(max-min)*(h-2*pad)]);
+  const p=pts.map((q,i)=>(i?"L":"M")+q[0].toFixed(1)+","+q[1].toFixed(1)).join(" ");
+  const a=p+" L"+pts[pts.length-1][0].toFixed(1)+","+(h-pad)+" L"+pts[0][0].toFixed(1)+","+(h-pad)+" Z";
+  el.innerHTML='<path d="'+a+'" fill="'+color+'" opacity="0.07"/><path d="'+p+'" fill="none" stroke="'+color+'" stroke-width="1.6"/>';}
+function bars(el,rows,color){const m=Math.max(...rows.map(r=>r[1]));
+  el.innerHTML=rows.map(r=>'<div class="bar"><span>'+r[0]+'</span><span class="track"><span class="fill" style="width:'+(r[1]/m*100).toFixed(0)+'%;background:'+color+'"></span></span><b>'+r[1].toLocaleString()+'</b></div>').join("");}
+
+line(document.getElementById('lead'),history,'#0a72ef');
+bars(document.getElementById('outlets'),outlets,'#111');
+bars(document.getElementById('authors'),authors,'#111');
+document.getElementById('movers').innerHTML=movers.map(m=>'<tr><td><span class="sym">'+m[0]+'</span></td><td class="num">'+m[1].toLocaleString()+'</td><td class="num '+m[2]+'">'+(m[2]==='up'?'+':'−')+'3.1%</td></tr>').join("");
+
+// interactive: click the date-range label in the lead chart caption to re-window the line
+document.querySelectorAll('.story .meta .serif').forEach(el=>{
+  el.style.cursor='pointer';
+  el.innerHTML='7d';
+  el.onclick=()=>{ const r=['7d','30d','1y','5y']; const cur=r[(r.indexOf(el.textContent)+1)%4]; el.textContent=cur;
+    const n=cur==='7d'?7:cur==='30d'?11:cur==='1y'?16:history.length;
+    line(document.getElementById('lead'),history.slice(-Math.max(6,n)),'#0a72ef'); };
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>news-stats — N3 · Section Front</title>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600;6..72,700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing:border-box; margin:0; padding:0; }
+  :root { --ink:#111; --body:#333; --muted:#767676; --rule:#e0e0e0; --blue:#0a72ef; --green:#16a34a; --red:#dc2626; }
+  body { font-family:'Inter',-apple-system,system-ui,sans-serif; background:#fff; color:var(--ink); -webkit-font-smoothing:antialiased; }
+  .serif { font-family:'Newsreader',Georgia,serif; }
+
+  .masthead { display:flex; align-items:baseline; justify-content:space-between; padding:18px 26px 12px; border-bottom:3px double var(--ink); }
+  .masthead h1 { font-family:'Newsreader',serif; font-weight:700; font-size:40px; letter-spacing:-0.5px; }
+  .masthead .edition { font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:1px; }
+  .nav { display:flex; gap:20px; padding:10px 26px; border-bottom:1px solid var(--ink); }
+  .nav a { font-size:13px; font-weight:500; color:var(--ink); text-decoration:none; }
+  .nav a.on { font-weight:600; border-bottom:2px solid var(--ink); }
+
+  main { max-width:1120px; margin:0 auto; padding:22px 26px 44px; }
+
+  /* hero lead */
+  .hero { display:grid; grid-template-columns:1.1fr 1fr; gap:0; border-bottom:1px solid var(--ink); padding-bottom:22px; }
+  .hero .deck { padding-right:22px; border-right:1px solid var(--rule); }
+  .hero .kicker { font-size:11px; font-weight:600; letter-spacing:1px; text-transform:uppercase; color:var(--muted); }
+  .hero h2 { font-family:'Newsreader',serif; font-weight:600; font-size:34px; line-height:1.08; margin:8px 0 10px; }
+  .hero .lede { font-size:15px; line-height:1.55; color:var(--body); max-width:42ch; }
+  .hero .meta { font-size:11.5px; color:var(--muted); margin-top:12px; }
+  .hero .chart-wrap { display:flex; flex-direction:column; justify-content:center; padding-left:22px; }
+  .spark { display:block; width:100%; height:230px; }
+
+  /* story grid */
+  .grid { display:grid; grid-template-columns:1fr 1fr; gap:0; margin-top:22px; }
+  .story { padding:18px 22px; border-right:1px solid var(--rule); border-bottom:1px solid var(--rule); }
+  .story:nth-child(2n){ border-right:0; }
+  .story h3 { font-family:'Newsreader',serif; font-weight:600; font-size:19px; line-height:1.15; margin:5px 0 6px; }
+  .story p { font-size:13px; line-height:1.5; color:var(--body); }
+  .spark-sm { display:block; width:100%; height:110px; margin:6px 0; }
+  .bars { display:flex; flex-direction:column; gap:7px; }
+  .bar { display:grid; grid-template-columns:120px 1fr auto; gap:8px; align-items:center; font-size:12px; }
+  .bar .track { height:7px; background:#f2f2f2; }
+  .bar .fill { height:100%; background:var(--ink); }
+
+  .strip { display:grid; grid-template-columns:repeat(4,1fr); gap:0; margin-top:22px; border:1px solid var(--rule); }
+  .strip .cell { padding:14px 18px; border-right:1px solid var(--rule); }
+  .strip .cell:last-child { border-right:0; }
+  .strip .n { font-size:26px; font-weight:600; letter-spacing:-0.5px; font-variant-numeric:tabular-nums; }
+  .strip .l { font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.5px; margin-top:3px; }
+
+  @media (max-width:760px){ .hero,.grid { grid-template-columns:1fr; } .story:nth-child(2n){ border-right:1px solid var(--rule);} .strip { grid-template-columns:1fr 1fr;} }
+</style>
+</head>
+<body>
+
+<div class="masthead">
+  <h1>news-stats</h1>
+  <div class="edition">the data section</div>
+</div>
+<nav class="nav">
+  <a href="#" class="on">Front</a><a href="#">Volume</a><a href="#">Length</a><a href="#">Authors</a><a href="#">Ask the data</a>
+</nav>
+
+<main>
+  <div class="hero">
+    <div class="deck">
+      <div class="kicker">Five-year history</div>
+      <h2>2.95 million articles, in one line.</h2>
+      <p class="lede">Every article from 22 outlets, scraped nightly, word-counted, and loaded into a warehouse any BI tool can query. The peak is real: 5,458 stories on one November day in 2023.</p>
+      <div class="meta">GDELT GKG · Oct 2021 → present · by Jonah Darnel</div>
+    </div>
+    <div class="chart-wrap">
+      <svg class="spark" id="lead" preserveAspectRatio="none"></svg>
+    </div>
+  </div>
+
+  <div class="grid">
+    <div class="story">
+      <div class="kicker">Length</div>
+      <h3>Analysis sites run five times longer than tabloids.</h3>
+      <svg class="spark-sm" id="outlets" preserveAspectRatio="none"></svg>
+      <p>The Intercept averages 2,739 words; the Daily Mail, 522. One number, two very different editorial products.</p>
+    </div>
+    <div class="story">
+      <div class="kicker">Authors</div>
+      <h3>The bylines moving the most words.</h3>
+      <div class="bars" id="authors"></div>
+      <p>Canonicalized from 71.6K raw bylines to 39.8K real people. Pseudo-authors are dropped.</p>
+    </div>
+    <div class="story">
+      <div class="kicker">Trends</div>
+      <h3>Volume is off the 2023 peak.</h3>
+      <p>7d up 2%, 30d down 7%, 90d down 19.3%. Part coverage dip, part a calmer cycle — flagged honestly rather than smoothed.</p>
+      <div class="meta" style="margin-top:10px"><span style="color:var(--green)">▲ +2.0%</span> · <span style="color:var(--red)">▼ −7.0%</span> · <span style="color:var(--red)">▼ −19.3%</span></div>
+    </div>
+    <div class="story">
+      <div class="kicker">Ask the data</div>
+      <h3>Query it like a reporter.</h3>
+      <p>"Compare CNN and Fox length over 90 days," "who wrote the most last month?" A constrained engine answers in natural language — no raw SQL exposed.</p>
+      <div class="meta" style="margin-top:10px">Live in the full dashboard →</div>
+    </div>
+  </div>
+
+  <div class="strip">
+    <div class="cell"><div class="n">2.95M</div><div class="l">articles</div></div>
+    <div class="cell"><div class="n">39.8K</div><div class="l">authors</div></div>
+    <div class="cell"><div class="n">22</div><div class="l">outlets</div></div>
+    <div class="cell"><div class="n">54%</div><div class="l">coverage</div></div>
+  </div>
+</main>
+
+<script>
+const history=[3100,3300,3550,3800,4100,4400,4700,5050,5350,5458,5400,5200,4950,4700,4450,4250,4080,3900,3750,3600,3480,3350,3250,3180];
+const outlets=[["Intercept",2739],["Jacobin",1180],["Guardian",932],["Politico",870],["CNN",704],["Fox",607],["NY Post",588],["Daily Mail",522]];
+const authors=[["Heidi Parker",314000],["Amelia Wynne",287000],["Rebecca Whittaker",201000],["Charlotte Dean",174000],["Jake Tapper",96000]];
+
+function line(el,data,color,h){const w=900,hh=h||230,pad=6,max=Math.max(...data),min=Math.min(...data);
+  const pts=data.map((v,i)=>[pad+i*(w-2*pad)/(data.length-1),hh-pad-(v-min)/(max-min)*(hh-2*pad)]);
+  const p=pts.map((q,i)=>(i?"L":"M")+q[0].toFixed(1)+","+q[1].toFixed(1)).join(" ");
+  const a=p+" L"+pts[pts.length-1][0].toFixed(1)+","+(hh-pad)+" L"+pts[0][0].toFixed(1)+","+(hh-pad)+" Z";
+  el.innerHTML='<path d="'+a+'" fill="'+color+'" opacity="0.07"/><path d="'+p+'" fill="none" stroke="'+color+'" stroke-width="1.6"/>';}
+function bars(el,rows){const m=Math.max(...rows.map(r=>r[1]));
+  el.innerHTML=rows.map(r=>'<div class="bar"><span>'+r[0]+'</span><span class="track"><span class="fill" style="width:'+(r[1]/m*100).toFixed(0)+'%"></span></span><b>'+r[1].toLocaleString()+'</b></div>').join("");}
+
+line(document.getElementById('lead'),history,'#0a72ef',230);
+line(document.getElementById('outlets'),outlets,'#111',110);
+bars(document.getElementById('authors'),authors);
+
+// interactive: hero headline dates between peak and total anchors
+const h2=document.querySelector('.hero h2');
+const anchors=["2.95 million articles, in one line.","5,458 stories on a single day.","22 outlets, one common schema."];
+let ai=0; h2.style.cursor='pointer'; h2.title='click to cycle headline';
+h2.onclick=()=>{ ai=(ai+1)%anchors.length; h2.textContent=anchors[ai]; };
+</script>
+</body>
+</html>

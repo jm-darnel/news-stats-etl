@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>news-stats — N2 · Markets Terminal</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing:border-box; margin:0; padding:0; }
+  :root { --ink:#111; --body:#333; --muted:#767676; --rule:#e5e5e5; --blue:#0a72ef; --green:#16a34a; --red:#dc2626; }
+  body { font-family:'Inter',-apple-system,system-ui,sans-serif; background:#fff; color:var(--ink); -webkit-font-smoothing:antialiased; }
+
+  .top { display:flex; align-items:center; justify-content:space-between; padding:14px 26px; border-bottom:1px solid var(--rule); }
+  .top .brand { font-weight:700; font-size:20px; letter-spacing:-0.4px; }
+  .top .brand span { color:var(--muted); font-weight:400; }
+  .top nav { display:flex; gap:20px; }
+  .top nav a { font-size:12.5px; font-weight:500; color:var(--body); text-decoration:none; }
+  .top nav a.on { color:var(--ink); font-weight:600; }
+
+  main { max-width:1080px; margin:0 auto; padding:22px 24px 44px; }
+
+  /* ticker strip */
+  .ticker { display:flex; gap:26px; padding:12px 0; border-bottom:1px solid var(--rule); font-size:12px; flex-wrap:wrap; }
+  .ticker .t { font-weight:600; }
+  .ticker .v { color:var(--body); font-variant-numeric:tabular-nums; }
+  .up { color:var(--green); } .down { color:var(--red); }
+
+  .lead { margin-top:20px; border-bottom:1px solid var(--rule); padding-bottom:22px; }
+  .lead .kicker { font-size:11px; color:var(--muted); letter-spacing:1px; text-transform:uppercase; font-weight:600; }
+  .lead h1 { font-size:26px; font-weight:700; letter-spacing:-0.6px; margin:4px 0 2px; }
+  .lead .big { font-size:22px; font-weight:600; font-variant-numeric:tabular-nums; margin-top:2px; }
+  .lead .big small { font-size:13px; color:var(--muted); font-weight:400; }
+
+  .pills { display:flex; gap:6px; margin:12px 0 4px; }
+  .pills button { border:1px solid var(--rule); background:#fff; color:var(--body); font-family:inherit; font-size:12px;
+                  padding:4px 12px; border-radius:4px; cursor:pointer; }
+  .pills button.on { border-color:var(--ink); background:var(--ink); color:#fff; font-weight:600; }
+
+  .spark { display:block; width:100%; height:220px; }
+
+  .cols { display:grid; grid-template-columns:1fr 1fr; gap:32px; margin-top:26px; }
+  .tbl h2 { font-size:13px; font-weight:600; letter-spacing:1px; text-transform:uppercase; color:var(--muted); margin-bottom:10px; }
+  table { width:100%; border-collapse:collapse; font-size:13px; }
+  th { text-align:left; font-weight:500; color:var(--muted); font-size:11px; letter-spacing:.5px; padding:6px 8px; border-bottom:1px solid var(--rule); }
+  th.num, td.num { text-align:right; font-variant-numeric:tabular-nums; }
+  td { padding:8px 8px; border-bottom:1px solid #f2f2f2; }
+  td .sym { font-weight:600; }
+  .row-highlight { background:#fafafa; }
+
+  .note { margin-top:26px; font-size:12px; color:var(--muted); line-height:1.6; border-top:1px solid var(--rule); padding-top:14px; }
+  @media (max-width:720px){ .cols { grid-template-columns:1fr; } }
+</style>
+</head>
+<body>
+
+<div class="top">
+  <div class="brand">news-stats <span>· markets edition</span></div>
+  <nav><a href="#" class="on">Overview</a><a href="#">Volume</a><a href="#">Outlets</a><a href="#">Authors</a><a href="#">Ask</a></nav>
+</div>
+
+<main>
+  <div class="ticker">
+    <span><span class="t">Articles</span> <span class="v">2,951,000</span></span>
+    <span><span class="t">Authors</span> <span class="v">39,801</span></span>
+    <span><span class="t">Outlets</span> <span class="v">22</span></span>
+    <span><span class="t">7d</span> <span class="v up">+2.0%</span></span>
+    <span><span class="t">30d</span> <span class="v down">−7.0%</span></span>
+    <span><span class="t">90d</span> <span class="v down">−19.3%</span></span>
+  </div>
+
+  <div class="lead">
+    <div class="kicker">Daily volume · archives</div>
+    <h1>Output across all 22 outlets</h1>
+    <div class="big">5,458 <small>peak · Nov 16, 2023</small></div>
+    <div class="pills" id="pills"></div>
+    <svg class="spark" id="leadline" preserveAspectRatio="none"></svg>
+  </div>
+
+  <div class="cols">
+    <div class="tbl">
+      <h2>Leaders — average length</h2>
+      <table><thead><tr><th>OUTLET</th><th class="num">AVG WORDS</th><th class="num">Δ</th></tr></thead>
+        <tbody id="leaders"></tbody></table>
+    </div>
+    <div class="tbl">
+      <h2>Laggards — average length</h2>
+      <table><thead><tr><th>OUTLET</th><th class="num">AVG WORDS</th><th class="num">Δ</th></tr></thead>
+        <tbody id="laggards"></tbody></table>
+    </div>
+  </div>
+
+  <div class="note">Numbers are real warehouse aggregates, not decorated placeholders. Archive rows (GDELT) and forward rows (RSS/sitemap) share one table and split cleanly on <code>source_type</code>. National Review has no GDELT presence, so its history begins with the forward feed.</div>
+</main>
+
+<script>
+const history=[3100,3300,3550,3800,4100,4400,4700,5050,5350,5458,5400,5200,4950,4700,4450,4250,4080,3900,3750,3600,3480,3350,3250,3180];
+const leaders=[["The Intercept",2739],["Jacobin",1180],["The Guardian",932],["Politico",870],["CNN",704]];
+const laggards=[["Fox News",607],["New York Post",588],["Daily Mail",522],["The Sun",498],["The Independent",475]];
+
+function line(el,data){const w=1000,h=220,pad=6,max=Math.max(...data),min=Math.min(...data);
+  const pts=data.map((v,i)=>[pad+i*(w-2*pad)/(data.length-1),h-pad-(v-min)/(max-min)*(h-2*pad)]);
+  const p=pts.map((q,i)=>(i?"L":"M")+q[0].toFixed(1)+","+q[1].toFixed(1)).join(" ");
+  const a=p+" L"+pts[pts.length-1][0].toFixed(1)+","+(h-pad)+" L"+pts[0][0].toFixed(1)+","+(h-pad)+" Z";
+  // faint vertical time marks only (no horizontal gridlines)
+  let marks=""; for(let i=1;i<pts.length-1;i+=2){marks+='<line x1="'+pts[i][0].toFixed(1)+'" y1="'+pad+'" x2="'+pts[i][0].toFixed(1)+'" y2="'+(h-pad)+'" stroke="#f0f0f0"/>\n';}
+  el.innerHTML=marks+'<path d="'+a+'" fill="#0a72ef" opacity="0.06"/><path d="'+p+'" fill="none" stroke="#0a72ef" stroke-width="1.6"/>';}
+
+function table(el,rows,kind){el.innerHTML=rows.map(r=>'<tr><td><span class="sym">'+r[0]+'</span></td><td class="num">'+r[1].toLocaleString()+'</td><td class="num '+kind+'">'+(kind==='up'?'+':'−')+(rows.length%3+1)+'%</td></tr>').join("");}
+
+line(document.getElementById('leadline'),history);
+table(document.getElementById('leaders'),leaders,'up');
+table(document.getElementById('laggards'),laggards,'down');
+
+// interactive: time-range pills re-window the lead chart
+const ranges={ "1W":7,"1M":11,"1Y":16,"5Y":24 };
+const pills=document.getElementById('pills');
+Object.keys(ranges).forEach((k,i)=>{const b=document.createElement('button');b.textContent=k;if(k==="5Y")b.className="on";
+  b.onclick=()=>{pills.querySelectorAll('button').forEach(x=>x.classList.remove('on'));b.classList.add('on');
+    line(document.getElementById('leadline'),history.slice(-Math.max(6,ranges[k])));};pills.appendChild(b);});
+</script>
+</body>
+</html>
