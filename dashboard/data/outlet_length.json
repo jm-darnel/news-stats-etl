@@ -31,13 +31,13 @@
   },
   {
     "outlet": "latimes",
-    "count": 120996,
-    "avg": 891.9
+    "count": 120123,
+    "avg": 895.9
   },
   {
     "outlet": "cnn",
-    "count": 239980,
-    "avg": 835.9
+    "count": 105319,
+    "avg": 772.3
   },
   {
     "outlet": "time",
@@ -67,7 +67,7 @@
   {
     "outlet": "wired",
     "count": 15291,
-    "avg": 600.8
+    "avg": 601.2
   },
   {
     "outlet": "thesun",
@@ -77,12 +77,12 @@
   {
     "outlet": "cbs",
     "count": 172818,
-    "avg": 554.7
+    "avg": 554.8
   },
   {
     "outlet": "fox",
-    "count": 257207,
-    "avg": 519.2
+    "count": 255990,
+    "avg": 520.7
   },
   {
     "outlet": "washexaminer",

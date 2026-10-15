@@ -2,121 +2,121 @@
   {
     "author": "Nilay Patel",
     "outlet": "theverge",
-    "articles": 12,
-    "words": 79668
+    "articles": 11,
+    "words": 77708
   },
   {
     "author": "Jen\u00e9e Desmond-Harris",
     "outlet": "slate",
-    "articles": 38,
-    "words": 49126
-  },
-  {
-    "author": "The Intercept Briefing",
-    "outlet": "intercept",
-    "articles": 5,
-    "words": 35871
+    "articles": 34,
+    "words": 45677
   },
   {
     "author": "Rich Juzwiak",
     "outlet": "slate",
-    "articles": 24,
-    "words": 32715
+    "articles": 22,
+    "words": 30399
   },
   {
-    "author": "David Wright",
-    "outlet": "cnn",
-    "articles": 21,
-    "words": 32285
-  },
-  {
-    "author": "Aaron Blake",
-    "outlet": "cnn",
-    "articles": 43,
-    "words": 32211
-  },
-  {
-    "author": "David Smith",
-    "outlet": "guardian",
-    "articles": 26,
-    "words": 31827
-  },
-  {
-    "author": "Brady Knox",
-    "outlet": "washexaminer",
-    "articles": 67,
-    "words": 31793
-  },
-  {
-    "author": "Brian Stelter",
-    "outlet": "cnn",
-    "articles": 38,
-    "words": 31072
-  },
-  {
-    "author": "Stephen Collinson",
-    "outlet": "cnn",
-    "articles": 23,
-    "words": 29448
-  },
-  {
-    "author": "Jeremy Herb",
-    "outlet": "cnn",
-    "articles": 15,
-    "words": 29368
-  },
-  {
-    "author": "Christine Bragg",
-    "outlet": "fox",
-    "articles": 12,
-    "words": 29234
+    "author": "Frank Andrews",
+    "outlet": "cbs",
+    "articles": 4,
+    "words": 30026
   },
   {
     "author": "Jessica Stoya",
     "outlet": "slate",
-    "articles": 21,
-    "words": 28413
-  },
-  {
-    "author": "Editorial",
-    "outlet": "guardian",
-    "articles": 52,
-    "words": 28224
-  },
-  {
-    "author": "Gloria Pazmino",
-    "outlet": "cnn",
-    "articles": 20,
-    "words": 27971
-  },
-  {
-    "author": "Timothy Nerozzi",
-    "outlet": "washexaminer",
-    "articles": 43,
-    "words": 26386
-  },
-  {
-    "author": "Patrick Wintour",
-    "outlet": "guardian",
-    "articles": 31,
-    "words": 25900
+    "articles": 22,
+    "words": 29994
   },
   {
     "author": "Slate Staff",
     "outlet": "slate",
-    "articles": 5,
-    "words": 25879
+    "articles": 6,
+    "words": 28475
   },
   {
-    "author": "Zachary Cohen",
-    "outlet": "cnn",
+    "author": "Brady Knox",
+    "outlet": "washexaminer",
+    "articles": 63,
+    "words": 28231
+  },
+  {
+    "author": "David Smith",
+    "outlet": "guardian",
+    "articles": 24,
+    "words": 27931
+  },
+  {
+    "author": "Amelia Wynne",
+    "outlet": "dailymail",
+    "articles": 21,
+    "words": 27503
+  },
+  {
+    "author": "Joanna Crawley",
+    "outlet": "dailymail",
+    "articles": 30,
+    "words": 26658
+  },
+  {
+    "author": "Editorial",
+    "outlet": "guardian",
+    "articles": 48,
+    "words": 26318
+  },
+  {
+    "author": "Patrick Wintour",
+    "outlet": "guardian",
+    "articles": 29,
+    "words": 24536
+  },
+  {
+    "author": "Christine Bragg",
+    "outlet": "fox",
+    "articles": 10,
+    "words": 24195
+  },
+  {
+    "author": "Bethan Edwards",
+    "outlet": "dailymail",
     "articles": 26,
-    "words": 25461
+    "words": 24120
   },
   {
-    "author": "Annie Grayer",
-    "outlet": "cnn",
-    "articles": 23,
-    "words": 24128
+    "author": "Ruth Stainer",
+    "outlet": "dailymail",
+    "articles": 17,
+    "words": 23515
+  },
+  {
+    "author": "Rebecca Whittaker",
+    "outlet": "independent",
+    "articles": 33,
+    "words": 22407
+  },
+  {
+    "author": "Timothy Nerozzi",
+    "outlet": "washexaminer",
+    "articles": 36,
+    "words": 21204
+  },
+  {
+    "author": "Caroline Peacock",
+    "outlet": "dailymail",
+    "articles": 18,
+    "words": 20810
+  },
+  {
+    "author": "James Tapsfield",
+    "outlet": "dailymail",
+    "articles": 28,
+    "words": 20423
+  },
+  {
+    "author": "Imogen Garfinkel",
+    "outlet": "dailymail",
+    "articles": 15,
+    "words": 20267
   }
 ]

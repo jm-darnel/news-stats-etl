@@ -6,6 +6,7 @@ import re
 from urllib.parse import urlsplit
 
 from newsstats.category import normalize_category
+from newsstats.content_type import classify_content
 from newsstats.models import (
     COMPLETENESS_FULL,
     CanonicalArticle,
@@ -30,6 +31,10 @@ _NON_PERSON = {
     "wire staff", "ap wire", "news wire", "daily", "the daily", "daily express",
     "daily star", "daily telegraph", "daily mirror", "daily record", "daily beast",
     "daily mail australia",
+    "mail on sunday",  # publication name riding a role byline ("MAIL ON SUNDAY COLUMNIST")
+    "associated",  # AP-syndicated content on the archive side
+    "the intercept briefing",  # archive-side desk newsletter byline
+    "cnn business",  # section/desk brand byline on the archive side
 }
 
 _ROLE_PREFIXES = ("news editor", "editor", "senior", "staff writer", "contributing")
@@ -100,4 +105,5 @@ def to_canonical(
         extraction_confidence=extracted.extraction_confidence,
         first_seen_at=seen_at,
         last_seen_at=seen_at,
+        content_type=classify_content(discovered.url, source),
     )

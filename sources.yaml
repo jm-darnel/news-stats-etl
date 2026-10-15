@@ -8,6 +8,11 @@
 #   feed_url    RSS/Atom URL (discovery=rss) OR Google News sitemap URL (discovery=sitemap)
 #   notes       free-form extraction hints (kept human-readable)
 #   category_map  OPTIONAL dict of URL-path prefix -> normalized category
+#   list_url_pattern  OPTIONAL regex on the URL: marks list/deal/guide pages
+#     (content_type='list'). Opt-in per outlet: a global regex does not
+#     generalize across CMSes (only add one after validating precision).
+#   live_post_url_pattern  OPTIONAL regex marking posts inside rolling live-news
+#     pages (content_type='live_post'); real documents, not articles.
 outlets:
   - outlet_id: cnn
     name: CNN
@@ -16,6 +21,8 @@ outlets:
     feed_url: https://www.cnn.com/sitemap/news.xml
     skip_path_prefixes:
       - /cnn-underscored/
+    list_url_pattern: '/(list|listicle)s?/'
+    live_post_url_pattern: '/live-news/'
     notes: no native RSS (dead since 2024); author via JSON-LD on some articles; cnn-underscored (commerce) 403s and is skipped
   - outlet_id: nbc
     name: NBC News
@@ -40,6 +47,7 @@ outlets:
     domain: foxnews.com
     discovery: rss
     feed_url: https://moxie.foxnews.com/google-publisher/latest.xml
+    live_post_url_pattern: '/live-news/'
     notes: author via dc.creator meta; no JSON-LD; no category
   - outlet_id: nypost
     name: New York Post
@@ -118,6 +126,7 @@ outlets:
     domain: latimes.com
     discovery: rss
     feed_url: https://www.latimes.com/index.rss
+    list_url_pattern: '/(list|listicle)s?/'
     notes: author via JSON-LD; articleBody present in JSON-LD (word count ok); metered
   - outlet_id: time
     name: Time

@@ -48,23 +48,28 @@ def _health(conn) -> dict:
 
 
 def _trends(conn) -> dict:
-    """Rule-based window-vs-prior-window deltas for 7/30/90 days (5-year backfill)."""
+    """Rule-based window-vs-prior-window deltas for 7/30/90 days (5-year backfill).
+
+    Read from the live agg_outlet_daily mart (rebuilt each run over the conformed
+    table), not the static backfill tables, so trends always match the warehouse.
+    """
     out = {}
     for w in (7, 30, 90):
         cur = conn.execute(
             "SELECT coalesce(sum(article_count),0), "
-            "round(sum(article_count * avg_word_count)::DOUBLE / nullif(sum(article_count), 0), 1) "
-            "FROM backfill_daily WHERE day >= current_date - (? * INTERVAL '1 DAY')",
+            "round(sum(total_words)::DOUBLE / nullif(sum("
+            "  article_count - article_count_live_post), 0), 1) "
+            "FROM agg_outlet_daily WHERE day >= current_date - (? * INTERVAL '1 DAY')",
             [w],
         ).fetchone()
         prev = conn.execute(
-            "SELECT coalesce(sum(article_count),0) FROM backfill_daily "
+            "SELECT coalesce(sum(article_count),0) FROM agg_outlet_daily "
             "WHERE day >= current_date - (? * INTERVAL '1 DAY') "
             "AND day < current_date - (? * INTERVAL '1 DAY')",
             [2 * w, w],
         ).fetchone()
         top = conn.execute(
-            "SELECT outlet_id FROM backfill_outlet_daily "
+            "SELECT outlet_id FROM agg_outlet_daily "
             "WHERE day >= current_date - (? * INTERVAL '1 DAY') "
             "GROUP BY outlet_id ORDER BY sum(article_count) DESC LIMIT 1",
             [w],
@@ -83,16 +88,19 @@ def _trends(conn) -> dict:
 
 
 def _history(conn) -> dict:
-    """5-year daily series from the GDELT archive side of the conformed table.
+    """5-year daily series from the archive side of the conformed table.
 
     Kept separate from the forward series on purpose: GDELT `wc:` and trafilatura
     tokens are different measurements, so the two are never blended into one line.
+    Volume counts every archive row (live posts included); word metrics exclude
+    live-post pages (their GDELT `wc:` is a page-level snapshot).
     """
     rows = conn.execute(
         """
         SELECT day,
                sum(article_count_archive) AS articles,
-               round(sum(total_words_archive)::DOUBLE / nullif(sum(article_count_archive), 0), 1) AS avg_words
+               sum(article_count_archive_words) AS worded,
+               sum(total_words_archive) AS words
         FROM agg_outlet_daily
         WHERE article_count_archive > 0
         GROUP BY day
@@ -112,7 +120,105 @@ def _history(conn) -> dict:
         },
         "days": days,
         "articles": [int(r[1]) for r in rows],
-        "avg_words": [float(r[2]) for r in rows],
+        "articles_worded": [int(r[2]) for r in rows],
+        "words": [int(r[3]) for r in rows],
+        "avg_words": [round(r[3] / r[2], 1) if r[2] else None for r in rows],
+    }
+
+
+def _author_volume(conn, top: int = 15) -> dict:
+    """Daily article counts for the most prolific authors (pseudo-authors excluded).
+
+    Ranked by total article volume over the full archive window; the dashboard
+    re-ranks inside whatever date range the visitor filters to.
+    """
+    rows = conn.execute(
+        """
+        WITH per AS (
+            SELECT au.author_id, au.canonical_name, au.outlet_id,
+                   CAST(a.published_at AS DATE) AS d, count(*) AS n
+            FROM author au
+            JOIN article_author aa ON aa.author_id = au.author_id
+            JOIN article a ON a.article_id = aa.article_id
+            WHERE coalesce(au.is_pseudo, FALSE) = FALSE
+              AND a.content_type = 'article' AND a.published_at IS NOT NULL
+            GROUP BY 1, 2, 3, 4),
+        tot AS (
+            SELECT author_id, sum(n) AS t FROM per GROUP BY 1 ORDER BY t DESC LIMIT ?
+        )
+        SELECT p.d, p.canonical_name || ' · ' || o.name AS label, p.n
+        FROM per p JOIN tot USING (author_id)
+        JOIN outlet o ON o.outlet_id = p.outlet_id
+        ORDER BY p.d
+        """,
+        [top],
+    ).fetchall()
+    days = sorted({r[0] for r in rows})
+    day_idx = {d: i for i, d in enumerate(days)}
+    authors: dict[str, list[int]] = {}
+    for d, label, n in rows:
+        series = authors.setdefault(label, [0] * len(days))
+        series[day_idx[d]] = n
+    return {
+        "days": [str(d) for d in days],
+        "authors": authors,
+        "totals": {k: sum(v) for k, v in authors.items()},
+    }
+
+
+def _outlet_daily(conn) -> dict:
+    """Daily article counts per outlet, every content type, full archive window."""
+    rows = conn.execute(
+        """
+        SELECT o.name, CAST(published_at AS DATE) AS d, count(*) AS n
+        FROM article a JOIN outlet o USING (outlet_id)
+        WHERE published_at IS NOT NULL
+        GROUP BY 1, 2 ORDER BY 2
+        """
+    ).fetchall()
+    days = sorted({r[1] for r in rows})
+    day_idx = {d: i for i, d in enumerate(days)}
+    outlets: dict[str, list[int]] = {}
+    for label, d, n in rows:
+        series = outlets.setdefault(label, [0] * len(days))
+        series[day_idx[d]] = n
+    return {"days": [str(d) for d in days], "outlets": outlets}
+
+
+def _length_median(conn, min_pre: int = 100) -> dict:
+    """Per-outlet median article length, pre vs post GPT era (archive rows only).
+
+    Excludes live-post pages (page-level GDELT word counts) and outlets without
+    enough pre-era coverage for a stable median.
+    """
+    rows = conn.execute(
+        """
+        SELECT o.name,
+               quantile_cont(word_count, 0.5) FILTER (
+                   WHERE published_at < TIMESTAMP '2022-12-01') AS p50_pre,
+               quantile_cont(word_count, 0.5) FILTER (
+                   WHERE published_at >= TIMESTAMP '2022-12-01') AS p50_post,
+               count(*) FILTER (WHERE published_at < TIMESTAMP '2022-12-01') AS n_pre,
+               count(*) FILTER (WHERE published_at >= TIMESTAMP '2022-12-01') AS n_post
+        FROM article a JOIN outlet o USING (outlet_id)
+        WHERE word_count_source = 'archive' AND content_type = 'article'
+          AND word_count IS NOT NULL
+        GROUP BY o.name
+        ORDER BY o.name
+        """
+    ).fetchall()
+    return {
+        "outlets": [
+            {
+                "outlet": r[0],
+                "pre": round(float(r[1]), 0) if r[1] is not None else None,
+                "post": round(float(r[2]), 0) if r[2] is not None else None,
+                "n_pre": int(r[3]),
+                "n_post": int(r[4]),
+            }
+            for r in rows if r[3] >= min_pre
+        ],
+        "era_split": "pre: 2021-10..2022-11 · post: 2022-12.. · GDELT archive word counts, article rows only",
     }
 
 
@@ -146,10 +252,13 @@ def export_dashboard(conn, out_dir: str | Path = "dashboard") -> dict:
         """
     ).fetchall()
 
-    # length by outlet over the 5-year archive (labeled as such in the dashboard)
+    # length by outlet over the 5-year archive (labeled as such in the dashboard);
+    # article rows only: 'live_post' pages carry page-level GDELT word counts, and
+    # list pages inflate length averages
     outlet_len = conn.execute(
         "SELECT outlet_id, count(*) AS n, round(avg(word_count), 1) AS avg_words "
         "FROM article WHERE word_count_source = 'archive' AND word_count IS NOT NULL "
+        "AND content_type = 'article' "
         "GROUP BY outlet_id ORDER BY avg_words DESC"
     ).fetchall()
 
@@ -170,6 +279,9 @@ def export_dashboard(conn, out_dir: str | Path = "dashboard") -> dict:
         "volume": {"days": days, "total": volumes},
         "length": {"days": days, "avg": avg_lens},
         "history": _history(conn),
+        "author_volume": _author_volume(conn),
+        "outlet_daily": _outlet_daily(conn),
+        "length_median": _length_median(conn),
         "leaderboard": [
             {"author": r[0], "outlet": r[1], "articles": int(r[2]), "words": int(r[3])}
             for r in leaderboard

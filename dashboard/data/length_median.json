@@ -1,0 +1,124 @@
+{
+  "outlets": [
+    {
+      "outlet": "BBC",
+      "pre": 397.0,
+      "post": 330.0,
+      "n_pre": 30424,
+      "n_post": 125531
+    },
+    {
+      "outlet": "CBS News",
+      "pre": 396.0,
+      "post": 431.0,
+      "n_pre": 40925,
+      "n_post": 131768
+    },
+    {
+      "outlet": "CNN",
+      "pre": 546.0,
+      "post": 644.0,
+      "n_pre": 22430,
+      "n_post": 82589
+    },
+    {
+      "outlet": "Daily Mail",
+      "pre": 754.0,
+      "post": 784.0,
+      "n_pre": 228334,
+      "n_post": 616694
+    },
+    {
+      "outlet": "Fox News",
+      "pre": 390.0,
+      "post": 469.0,
+      "n_pre": 65981,
+      "n_post": 190009
+    },
+    {
+      "outlet": "LA Times",
+      "pre": 787.0,
+      "post": 791.0,
+      "n_pre": 31834,
+      "n_post": 88289
+    },
+    {
+      "outlet": "NBC News",
+      "pre": 490.0,
+      "post": 516.0,
+      "n_pre": 23601,
+      "n_post": 69984
+    },
+    {
+      "outlet": "ProPublica",
+      "pre": 1230.0,
+      "post": 1325.0,
+      "n_pre": 734,
+      "n_post": 2490
+    },
+    {
+      "outlet": "Slate",
+      "pre": 1108.0,
+      "post": 1056.0,
+      "n_pre": 6710,
+      "n_post": 21260
+    },
+    {
+      "outlet": "The Guardian",
+      "pre": 556.0,
+      "post": 608.0,
+      "n_pre": 90881,
+      "n_post": 258868
+    },
+    {
+      "outlet": "The Intercept",
+      "pre": 1312.0,
+      "post": 1179.0,
+      "n_pre": 509,
+      "n_post": 2679
+    },
+    {
+      "outlet": "The Sun",
+      "pre": 474.0,
+      "post": 531.0,
+      "n_pre": 15444,
+      "n_post": 11368
+    },
+    {
+      "outlet": "The Verge",
+      "pre": 385.0,
+      "post": 110.0,
+      "n_pre": 9378,
+      "n_post": 37386
+    },
+    {
+      "outlet": "Time",
+      "pre": 1342.0,
+      "post": 638.0,
+      "n_pre": 418,
+      "n_post": 20580
+    },
+    {
+      "outlet": "Vox",
+      "pre": 1448.0,
+      "post": 1205.0,
+      "n_pre": 2750,
+      "n_post": 6886
+    },
+    {
+      "outlet": "Washington Examiner",
+      "pre": 434.0,
+      "post": 438.0,
+      "n_pre": 25121,
+      "n_post": 83985
+    },
+    {
+      "outlet": "Wired",
+      "pre": 535.0,
+      "post": 508.0,
+      "n_pre": 1967,
+      "n_post": 13324
+    }
+  ],
+  "era_split": "pre: 2021-10..2022-11 \u00b7 post: 2022-12.. \u00b7 GDELT archive word counts, article rows only"
+}

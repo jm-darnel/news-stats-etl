@@ -1,36 +1,36 @@
 {
-  "articles": 2945566,
-  "articles_forward": 4102,
-  "articles_archive": 2941464,
-  "authors": 42817,
+  "articles": 2824165,
+  "articles_forward": 8056,
+  "articles_archive": 2816109,
+  "authors": 43518,
   "outlets": 22,
   "health": {
-    "status": "ok",
-    "last_run_at": "2026-10-09 17:39:55.692943",
-    "age_hours": 0.1,
-    "rows_last_run": 2941464,
-    "rows_flagged": 0,
+    "status": "warn",
+    "last_run_at": "2026-10-15 17:54:57.907741",
+    "age_hours": 1.2,
+    "rows_last_run": 125355,
+    "rows_flagged": 7423,
     "dq_checks_failed": 0,
     "sources": 22,
-    "total_articles": 2945566
+    "total_articles": 2824165
   },
   "trends": {
     "7": {
-      "articles": 4546,
-      "avg_words": 634.5,
-      "volume_pct_change": -17.9,
-      "top_outlet": "nypost"
+      "articles": 5631,
+      "avg_words": 774.3,
+      "volume_pct_change": -20.9,
+      "top_outlet": "dailymail"
     },
     "30": {
-      "articles": 24445,
-      "avg_words": 639.3,
-      "volume_pct_change": -12.2,
-      "top_outlet": "nypost"
+      "articles": 25923,
+      "avg_words": 673.5,
+      "volume_pct_change": 2.9,
+      "top_outlet": "guardian"
     },
     "90": {
-      "articles": 80957,
-      "avg_words": 636.8,
-      "volume_pct_change": -20.5,
+      "articles": 78001,
+      "avg_words": 637.8,
+      "volume_pct_change": -15.3,
       "top_outlet": "nypost"
     }
   }

@@ -56,6 +56,9 @@ class SourceConfig:
     notes: str = ""
     category_map: dict = field(default_factory=dict)
     skip_path_prefixes: list[str] = field(default_factory=list)
+    # Opt-in per-outlet genre patterns (see content_type.py). Absent = 'article'.
+    list_url_pattern: str | None = None
+    live_post_url_pattern: str | None = None
 
 
 @dataclass(frozen=True)
@@ -101,3 +104,4 @@ class CanonicalArticle:
     extraction_confidence: float
     first_seen_at: str
     last_seen_at: str
+    content_type: str = "article"  # article | list

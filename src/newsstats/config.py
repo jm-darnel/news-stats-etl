@@ -52,6 +52,8 @@ def load_sources(path: str | Path | None = None) -> list[SourceConfig]:
                 notes=raw.get("notes", ""),
                 category_map=raw.get("category_map", {}) or {},
                 skip_path_prefixes=raw.get("skip_path_prefixes") or [],
+                list_url_pattern=raw.get("list_url_pattern"),
+                live_post_url_pattern=raw.get("live_post_url_pattern"),
             )
         )
     return configs

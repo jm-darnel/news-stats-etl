@@ -22,6 +22,7 @@ Key enums:
 - `metric_completeness`: `full` | `volume_only`
 - `source_type`: `rss` | `sitemap` | `gdelt` | `ccnews`
 - `extraction_method`: e.g. `trafilatura`, `json-ld`, `meta`
+- `content_type`: `article` | `list` (per-outlet URL pattern; see below)
 
 ## 2. Canonical record (the shape everything emits)
 
@@ -69,6 +70,7 @@ class CanonicalArticle:
     extraction_confidence: float
     first_seen_at: str
     last_seen_at: str
+    content_type: str = "article"  # article | list
 ```
 
 ## 3. Module contracts and file ownership
@@ -89,7 +91,11 @@ One worker owns one module. No two workers touch the same file.
 ## 4. sources.yaml schema
 
 See the file header comment. Required keys per outlet: `outlet_id`, `name`,
-`domain`, `discovery`, `feed_url`. Optional: `notes`, `category_map`.
+`domain`, `discovery`, `feed_url`. Optional: `notes`, `category_map`,
+`list_url_pattern` (regex on the URL marking list/deal/guide pages; sets
+`content_type='list'` at normalize time). Only add a pattern after validating
+precision: a global regex does not generalize across CMSes (validated for LA
+Times `/list/` at precision 0.98; recall 0.00 for outlets with generic paths).
 Adding or removing a source is a config edit, never a code edit.
 
 ## 5. Acceptance tests (what done means per module)

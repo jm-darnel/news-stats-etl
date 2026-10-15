@@ -91,14 +91,15 @@ def upsert(conn, source: SourceConfig, rows: list[CanonicalArticle], run_id: str
     conn.executemany(
         "INSERT INTO article (article_id,outlet_id,url,title,published_at,category,language,"
         " word_count,word_count_source,metric_completeness,source_type,extraction_method,"
-        " extraction_confidence,first_seen_at,last_seen_at)"
-        " VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)"
+        " extraction_confidence,first_seen_at,last_seen_at,content_type)"
+        " VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)"
         " ON CONFLICT (article_id) DO NOTHING",
         [
             (
                 r.article_id, r.outlet_id, r.url, r.title, _to_ts(r.published_at), r.category,
                 r.language, r.word_count, r.word_count_source, r.metric_completeness, r.source_type,
-                r.extraction_method, r.extraction_confidence, _to_ts(r.first_seen_at), _to_ts(r.last_seen_at),
+                r.extraction_method, r.extraction_confidence, _to_ts(r.first_seen_at),
+                _to_ts(r.last_seen_at), r.content_type,
             )
             for r in fresh
         ],

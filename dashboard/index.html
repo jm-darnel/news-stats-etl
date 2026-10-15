@@ -33,7 +33,6 @@
   .col { padding:18px 16px; border-right:1px solid var(--rule); }
   .col:first-child { border-left:1px solid var(--rule); }
   .col:last-child { border-right:1px solid var(--rule); }
-  .col:not(:last-child) { border-right:1px solid var(--rule); }
 
   .kicker { font-size:11px; font-weight:600; letter-spacing:1px; text-transform:uppercase; color:var(--muted); }
   .story h3 { font-family:'Newsreader',serif; font-weight:600; font-size:21px; line-height:1.15; margin:4px 0 6px; }
@@ -47,25 +46,41 @@
   .fig b { font-variant-numeric:tabular-nums; font-size:13px; }
 
   table { width:100%; border-collapse:collapse; font-size:12px; }
-  th { text-align:left; font-weight:500; color:var(--muted); font-size:10.5px; letter-spacing:.5px; padding:4px 6px; border-bottom:1px solid var(--rule); }
+  th { text-align:left; font-weight:500; color:var(--muted); font-size:10.5px; letter-spacing:.5px; padding:4px 6px; border-bottom:1px solid var(--rule); position:sticky; top:0; background:#fff; }
   th.num, td.num { text-align:right; font-variant-numeric:tabular-nums; }
   td { padding:5px 6px; border-bottom:1px solid #f2f2f2; }
   td .sym { font-weight:600; }
 
   .wrap { position:relative; }
-  .wrap.tall { height:220px; }
-  .wrap.med { height:160px; }
-  .wrap.auto { height:200px; }
+  .wrap.tall { height:280px; }
+  .wrap.med { height:170px; }
+  .wrap.auto { height:210px; }
+  .wrap.bars { height:330px; }
+  .scroll { max-height:300px; overflow-y:auto; border:1px solid var(--rule); border-radius:3px; }
+  .scroll::-webkit-scrollbar { width:6px; }
+  .scroll::-webkit-scrollbar-thumb { background:#d4d4d4; border-radius:3px; }
 
   .pills { display:flex; gap:5px; margin-top:6px; }
   .pills button { border:1px solid var(--rule); background:#fff; color:var(--body); font-family:inherit; font-size:11px;
                   padding:3px 9px; border-radius:3px; cursor:pointer; }
   .pills button.on { background:var(--ink); border-color:var(--ink); color:#fff; font-weight:600; }
+  .pills-note { font-size:10.5px; color:var(--muted); margin-top:4px; }
 
   .footnote { font-size:11px; color:var(--muted); line-height:1.6; }
 
+  /* trends ticker */
+  .ticker-band { border-top:2px solid var(--ink); border-bottom:2px solid var(--ink); margin-top:26px;
+                 overflow:hidden; white-space:nowrap; background:#fff; }
+  .ticker-track { display:inline-flex; align-items:center; padding:7px 0; animation:tick 45s linear infinite; }
+  .ticker-band:hover .ticker-track { animation-play-state:paused; }
+  @keyframes tick { from { transform:translateX(0); } to { transform:translateX(-50%); } }
+  .tk { display:inline-flex; align-items:baseline; gap:6px; padding:0 26px; font-size:12.5px; letter-spacing:.3px; }
+  .tk .lbl { font-size:10px; font-weight:600; letter-spacing:1px; color:var(--muted); text-transform:uppercase; }
+  .tk .val { font-variant-numeric:tabular-nums; font-weight:600; }
+  .tri { font-size:11px; }
+
   /* chat */
-  .chat-section { border-top:3px double var(--ink); margin-top:26px; padding-top:22px; }
+  .chat-section { border-top:3px double var(--ink); margin-top:22px; padding-top:22px; }
   .chat-section h2 { font-family:'Newsreader',serif; font-weight:600; font-size:26px; margin-bottom:2px; }
   .chat-section .sub { font-size:12px; color:var(--muted); margin-bottom:14px; }
   #chat-log { max-height:240px; overflow-y:auto; margin-bottom:12px; display:flex; flex-direction:column; gap:8px; }
@@ -130,42 +145,59 @@
         <h3>The shape of the archive.</h3>
         <p id="peak-line">–</p>
         <div class="pills" id="pills"></div>
+        <p class="pills-note">This filter drives the volume, word-count, authors, and outlets panels.</p>
         <div class="wrap tall"><canvas id="history-volume"></canvas></div>
-        <p style="margin-top:8px" class="footnote">GDELT GKG backfill, Oct 2021 → present. National Review is not in GDELT's archive; its history begins with the forward feed.</p>
+        <p style="margin-top:8px" class="footnote">GDELT GKG backfill, Oct 2021 → present. Binned automatically: daily for short ranges, weekly or monthly for long ones. National Review is not in GDELT's archive; its history begins with the forward feed.</p>
+      </div>
+
+      <div class="rule hair"></div>
+
+      <div class="story" id="words">
+        <div class="kicker">Word count · over time</div>
+        <h3>How long is the average article?</h3>
+        <div class="wrap med"><canvas id="words-over-time"></canvas></div>
+        <p class="footnote" style="margin-top:6px">Mean words per article, archive word counts (GDELT <code>wc:</code>), live-news pages excluded. Same date filter as the volume chart.</p>
       </div>
 
       <div class="rule hair"></div>
 
       <div class="story" id="length">
         <div class="kicker">Length, by outlet</div>
-        <h3>Long-form sits five times heavier than wire copy.</h3>
-        <div class="wrap med"><canvas id="outlet-length"></canvas></div>
-        <p class="footnote" style="margin-top:6px">Mean words per article, full archive.</p>
+        <h3>Medians barely moved after ChatGPT.</h3>
+        <div class="wrap bars"><canvas id="length-median"></canvas></div>
+        <p class="footnote" style="margin-top:6px">Median words per article, archive rows only. Grey = pre era (Oct 2021–Nov 2022), blue = post era (Dec 2022 →). * Time's pre-era sample is thin (418 rows). Outlets without 100+ pre-era rows are omitted.</p>
       </div>
     </div>
 
     <!-- COLUMN 3 -->
     <div class="col">
       <div class="story" id="authors">
-        <div class="kicker">Authors · 30 days</div>
-        <h3>The bylines moving the most words.</h3>
+        <div class="kicker">Authors · most prolific</div>
+        <h3>The bylines publishing the most.</h3>
         <div class="wrap auto"><canvas id="leaderboard"></canvas></div>
+        <p class="footnote" style="margin-top:6px">Article counts within the selected window, desk and pseudo-bylines excluded. Ranked by total over the full archive.</p>
       </div>
 
       <div class="rule double"></div>
 
       <div class="story" id="outlets">
         <div class="kicker">Outlets · by volume</div>
-        <table>
-          <thead><tr><th>OUTLET</th><th class="num">ARTICLES</th></tr></thead>
-          <tbody id="movers"></tbody>
-        </table>
+        <div class="scroll">
+          <table>
+            <thead><tr><th>OUTLET</th><th class="num">ARTICLES</th></tr></thead>
+            <tbody id="movers"></tbody>
+          </table>
+        </div>
+        <p class="footnote" style="margin-top:6px">All 22 outlets, counts within the selected window.</p>
       </div>
 
       <div class="rule hair"></div>
-      <p class="footnote">Two word-count sources, never blended: forward rows are trafilatura word tokens; archive rows use GDELT's <code>wc:</code> field.</p>
+      <p class="footnote">Two word-count sources, never blended: forward rows are trafilatura word tokens; archive rows use GDELT's <code>wc:</code> field. Live-news posts count toward volume but never toward length metrics.</p>
     </div>
   </div>
+
+  <!-- TRENDS TICKER -->
+  <div class="ticker-band" id="trends-ticker"><div class="ticker-track" id="trends-track"></div></div>
 
   <!-- CHAT -->
   <div class="chat-section" id="ask">
@@ -197,17 +229,19 @@ const name = (slug) => NAMES[slug] || slug;
 document.getElementById('today').textContent =
   new Date().toLocaleDateString('en-US', { weekday:'long', month:'long', day:'numeric', year:'numeric' });
 
-// minimalist chart defaults: faint y grid, sparse x ticks, no legend
+// minimalist chart defaults
 function line(canvas, labels, data, color, opts) {
   return new Chart(canvas, {
     type:'line',
-    data:{ labels, datasets:[{ data, borderColor:color, backgroundColor:color+'18', fill:true, tension:0.25, pointRadius:0, borderWidth:1.6 }]},
+    data:{ labels, datasets:[{ data, borderColor:color, backgroundColor:color+'14', fill:true, tension:0.3, pointRadius:0, borderWidth:1.6 }]},
     options: Object.assign({
       maintainAspectRatio:false,
-      plugins:{ legend:{ display:false } },
+      plugins:{ legend:{ display:false },
+        tooltip:{ intersect:false, mode:'index' } },
       scales:{
-        x:{ grid:{ display:false }, ticks:{ autoSkip:true, maxTicksLimit:(opts&&opts.maxTicks)||8, color:'#999', font:{ size:10 } } },
-        y:{ grid:{ color:'#f3f3f3' }, ticks:{ color:'#999', font:{ size:10 }, maxTicksLimit:5 } }
+        x:{ grid:{ display:false }, ticks:{ autoSkip:true, maxTicksLimit:(opts&&opts.maxTicks)||8, color:'#999', font:{ size:10 }, maxRotation:0 } },
+        y:{ grid:{ color:'#f3f3f3' }, ticks:{ color:'#999', font:{ size:10 }, maxTicksLimit:5,
+            callback:(v)=> opts&&opts.kfmt ? (v>=1000 ? (v/1000)+'K' : v) : v } }
       }
     }, opts||{})
   });
@@ -221,56 +255,145 @@ function hbar(canvas, labels, data, color, opts) {
       plugins:{ legend:{ display:false } },
       scales:{
         x:{ grid:{ color:'#f3f3f3' }, ticks:{ color:'#999', font:{ size:10 }, maxTicksLimit:4 } },
-        y:{ grid:{ display:false }, ticks:{ color:'#333', font:{ size:11 } } }
+        y:{ grid:{ display:false }, ticks:{ color:'#333', font:{ size:10.5 } }, position:'right' }
       }
     }, opts||{})
   });
 }
 
-// --- history volume (hero) with date pills ---
-j('history').then(h => {
-  const canvas = document.getElementById('history-volume');
-  const RANGES = { '7d':7, '90d':90, '1y':365, '5y':1e9 };
-  const pills = document.getElementById('pills');
-  let chart = null;
-  function render() {
-    const n = RANGES[pills.querySelector('.on')?.textContent || '5y'];
-    const start = Math.max(0, h.days.length - n);
-    const d = h.days.slice(start), s = h.articles.slice(start);
-    if (chart) chart.destroy();
-    chart = line(canvas, d, s, '#0a72ef', { maxTicks:8 });
-  }
-  Object.keys(RANGES).forEach(k => {
-    const b = document.createElement('button'); b.textContent = k; if(k==='5y') b.className='on';
-    b.onclick = () => { pills.querySelectorAll('button').forEach(x=>x.classList.remove('on')); b.classList.add('on'); render(); };
-    pills.appendChild(b);
-  });
-  render();
-  // peak
-  let mi=0; h.articles.forEach((v,i)=>{ if(v>h.articles[mi]) mi=i; });
-  document.getElementById('peak-line').textContent =
-    `Peak ${h.articles[mi].toLocaleString()} stories, ${h.days[mi]}. The line below is the whole archive.`;
-}).catch(() => {});
+// --- shared date-filter state ---
+const RANGES = { '7d':7, '90d':90, '1y':365, '5y':1e9 };
+let RANGE = '5y';
+let charts = { vol:null, words:null, authors:null };
 
-// --- everything else ---
-Promise.all([j('summary'), j('outlet_length'), j('leaderboard')]).then(([summary, ol, lb]) => {
+// adaptive bucketing: daily up to ~100 points, weekly to ~400, monthly beyond
+function bucketize(days, values) {
+  const n = days.length;
+  let mode = 'day';
+  if (n > 400) mode = 'month'; else if (n > 100) mode = 'week';
+  if (mode === 'day') return { labels: days.map(fmtDay), values };
+  const acc = {}; const order = [];
+  days.forEach((d, i) => {
+    const k = mode === 'month' ? d.slice(0, 7) : weekStart(d);
+    if (!(k in acc)) { acc[k] = [0, 0]; order.push(k); }
+    acc[k][0] += (values[i] || 0); acc[k][1]++;
+  });
+  return {
+    labels: order.map(k => mode === 'month' ? fmtMonth(k) : fmtDay(k)),
+    values: order.map(k => acc[k][0]),
+    counts: order.map(k => acc[k][1]),
+    mode,
+  };
+}
+function weekStart(ds) {
+  const d = new Date(ds + 'T00:00:00Z');
+  const dow = (d.getUTCDay() + 6) % 7;           // Monday = 0
+  d.setUTCDate(d.getUTCDate() - dow);
+  return d.toISOString().slice(0, 10);
+}
+const MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+function fmtDay(ds) { const d = new Date(ds + 'T00:00:00Z'); return MON[d.getUTCMonth()] + ' ' + d.getUTCDate(); }
+function fmtMonth(ym) { const [y, m] = ym.split('-'); return MON[+m - 1] + ' ' + y.slice(2); }
+function sliceLast(days, values, n) {
+  const start = Math.max(0, days.length - n);
+  return [days.slice(start), values.slice(start)];
+}
+
+// --- data load: everything the pills drive ---
+let HIST = null, AV = null, OD = null;
+const pillsEl = document.getElementById('pills');
+Object.keys(RANGES).forEach(k => {
+  const b = document.createElement('button'); b.textContent = k; if (k === '5y') b.className = 'on';
+  b.onclick = () => { RANGE = k; pillsEl.querySelectorAll('button').forEach(x => x.classList.remove('on')); b.classList.add('on'); renderAll(); };
+  pillsEl.appendChild(b);
+});
+
+function renderVolume() {
+  if (!HIST) return;
+  const [d, v] = sliceLast(HIST.days, HIST.articles, RANGES[RANGE]);
+  const b = bucketize(d, v);
+  const cv = document.getElementById('history-volume');
+  if (charts.vol) charts.vol.destroy();
+  charts.vol = line(cv, b.labels, b.values, '#0a72ef', { kfmt:true, maxTicks:9 });
+  const tot = v.reduce((a, x) => a + x, 0);
+  let mi = 0; v.forEach((x, i) => { if (x > v[mi]) mi = i; });
+  document.getElementById('peak-line').textContent =
+    `${tot.toLocaleString()} articles in view · peak ${v[mi].toLocaleString()} on ${fmtDay(d[mi])}`;
+}
+
+function renderWords() {
+  if (!HIST) return;
+  const [d] = sliceLast(HIST.days, HIST.articles, RANGES[RANGE]);
+  const start = HIST.days.length - d.length;
+  const worded = HIST.articles_worded.slice(start), words = HIST.words.slice(start);
+  const pairs = d.map((day, i) => [day, worded[i], words[i]]);
+  const n = pairs.length;
+  let mode = 'day';
+  if (n > 400) mode = 'month'; else if (n > 100) mode = 'week';
+  const acc = {}; const order = [];
+  pairs.forEach(([day, w, ws]) => {
+    const k = mode === 'month' ? day.slice(0, 7) : weekStart(day);
+    if (!(k in acc)) { acc[k] = [0, 0]; order.push(k); }
+    acc[k][0] += w || 0; acc[k][1] += ws || 0;
+  });
+  const labels = order.map(k => mode === 'month' ? fmtMonth(k) : fmtDay(k));
+  const vals = order.map(k => Math.round(acc[k][0] / acc[k][1]));
+  if (charts.words) charts.words.destroy();
+  charts.words = line(document.getElementById('words-over-time'), labels, vals, '#333', { maxTicks:9 });
+}
+
+function renderAuthors() {
+  if (!AV) return;
+  const sums = {};
+  const start = Math.max(0, AV.days.length - RANGES[RANGE]);
+  const idx = new Set(AV.days.slice(start).map((d, i) => start + i));
+  for (const [label, series] of Object.entries(AV.authors)) {
+    let t = 0; series.forEach((v, i) => { if (idx.has(i)) t += v; });
+    sums[label] = t;
+  }
+  const top = Object.entries(sums).sort((a, b) => b[1] - a[1]).slice(0, 8);
+  if (charts.authors) charts.authors.destroy();
+  charts.authors = hbar(document.getElementById('leaderboard'),
+    top.map(r => r[0]).reverse(), top.map(r => r[1]), '#333');
+}
+
+function renderOutlets() {
+  if (!OD) return;
+  const start = Math.max(0, OD.days.length - RANGES[RANGE]);
+  const idx = new Set(OD.days.slice(start).map((d, i) => start + i));
+  const sums = {};
+  for (const [label, series] of Object.entries(OD.outlets)) {
+    let t = 0; series.forEach((v, i) => { if (idx.has(i)) t += v; });
+    sums[label] = t;
+  }
+  const rows = Object.entries(sums).sort((a, b) => b[1] - a[1]);
+  document.getElementById('movers').innerHTML = rows.map(r =>
+    `<tr><td><span class="sym">${r[0]}</span></td><td class="num">${r[1].toLocaleString()}</td></tr>`).join('');
+}
+
+function renderAll() { renderVolume(); renderWords(); renderAuthors(); renderOutlets(); }
+
+Promise.all([j('history'), j('author_volume'), j('outlet_daily')]).then(([h, av, od]) => {
+  HIST = h; AV = av; OD = od;
+  renderAll();
+}).catch(e => console.error('filter data failed', e));
+
+// --- static panels ---
+Promise.all([j('summary'), j('length_median')]).then(([summary, lm]) => {
   document.getElementById('f-articles').textContent = summary.articles.toLocaleString();
   document.getElementById('f-authors').textContent = summary.authors.toLocaleString();
   document.getElementById('f-outlets').textContent = summary.outlets.toLocaleString();
   document.getElementById('f-archive').textContent = (summary.articles_archive ?? summary.articles).toLocaleString();
 
-  // ticker / health
+  // utility bar: ETL health
   const h = summary.health || {};
   const tone = { ok:'#16a34a', warn:'#f59e0b', error:'#dc2626' }[h.status] || '#767676';
-  const t90 = (summary.trends || {})['90'];
   const t = document.getElementById('ticker');
-  let tick = t90 && t90.volume_pct_change != null
-    ? `<span class="${t90.volume_pct_change>=0?'up':'down'}">${t90.volume_pct_change>=0?'+':'−'}${Math.abs(t90.volume_pct_change)}%/90d</span>` : '';
   t.innerHTML =
     `<span><span class="dot" style="background:${tone}"></span>ETL ${h.status||'—'}</span>` +
-    `<span>${h.age_hours!=null ? h.age_hours+'h ago' : ''} · ${h.sources||summary.outlets} sources</span>` + tick;
+    `<span>${h.age_hours!=null ? h.age_hours+'h ago' : ''} · ${h.sources||summary.outlets} sources</span>`;
 
-  // trends
+  // trends figures (left column)
   const tr = summary.trends || {};
   const blurb = (w, x) => {
     const d = x.volume_pct_change;
@@ -280,20 +403,40 @@ Promise.all([j('summary'), j('outlet_length'), j('leaderboard')]).then(([summary
   document.getElementById('trends').innerHTML =
     ['7','30','90'].map(w => tr[w] ? blurb(w, tr[w]) : '').join('');
 
-  // outlet length (bar) — longest at top
-  const sorted = [...ol].sort((a,b)=>b.avg-a.avg);
-  const olLabels = sorted.map(r=>name(r.outlet));
-  hbar(document.getElementById('outlet-length'), olLabels, sorted.map(r=>Math.round(r.avg)), '#111');
+  // Bloomberg-style moving ticker above Ask the Data
+  const tri = (d) => d == null ? '<span class="tri" style="color:#767676">—</span>'
+    : d >= 0 ? '<span class="tri up">▲</span>' : '<span class="tri down">▼</span>';
+  const pct = (d) => d == null ? '' : `${d>=0?'+':'−'}${Math.abs(d)}%`;
+  const items = [];
+  items.push(`<span class="lbl">Archive</span><span class="val">${summary.articles.toLocaleString()}</span><span class="lbl">articles</span>`);
+  items.push(`<span class="lbl">Authors</span><span class="val">${summary.authors.toLocaleString()}</span>`);
+  ['7','30','90'].forEach(w => {
+    const x = tr[w]; if (!x) return;
+    items.push(`<span class="lbl">${w}d volume</span><span class="val">${x.articles.toLocaleString()}</span>${tri(x.volume_pct_change)}<span class="${(x.volume_pct_change||0)>=0?'up':'down'}">${pct(x.volume_pct_change)}</span>`);
+    if (x.avg_words != null)
+      items.push(`<span class="lbl">${w}d avg words</span><span class="val">${x.avg_words.toLocaleString()}</span>`);
+  });
+  const run = items.map(i => `<span class="tk">${i}</span><span style="color:var(--rule)">|</span>`).join('');
+  document.getElementById('trends-track').innerHTML = run + run; // duplicated for a seamless loop
 
-  // author leaderboard (bar)
-  const top = [...lb].sort((a,b)=>b.words-a.words).slice(0,8);
-  hbar(document.getElementById('leaderboard'), top.slice().reverse().map(r=>r.author),
-       top.slice().reverse().map(r=>r.words), '#333');
-
-  // outlets by volume (table)
-  const byVol = [...ol].sort((a,b)=>b.count-a.count).slice(0,8);
-  document.getElementById('movers').innerHTML = byVol.map(r =>
-    `<tr><td><span class="sym">${name(r.outlet)}</span></td><td class="num">${r.count.toLocaleString()}</td></tr>`).join('');
+  // median article length: paired pre/post bars per outlet
+  const rows = lm.outlets.filter(r => r.pre != null && r.post != null);
+  const labels = rows.map(r => r.outlet + (r.n_pre < 1000 ? ' *' : ''));
+  new Chart(document.getElementById('length-median'), {
+    type:'bar',
+    data:{ labels, datasets:[
+      { label:'pre',  data: rows.map(r => r.pre),  backgroundColor:'#b9b9b9', borderRadius:1.5 },
+      { label:'post', data: rows.map(r => r.post), backgroundColor:'#0a72ef', borderRadius:1.5 },
+    ]},
+    options:{ indexAxis:'y', maintainAspectRatio:false,
+      plugins:{ legend:{ display:true, position:'top', labels:{ boxWidth:10, font:{ size:10 }, color:'#767676' } } },
+      scales:{
+        x:{ grid:{ color:'#f3f3f3' }, ticks:{ color:'#999', font:{ size:10 }, maxTicksLimit:5 } },
+        y:{ grid:{ display:false }, ticks:{ color:'#333', font:{ size:10.5 } }, position:'right', stacked:false },
+      },
+      datasets:{ bar:{ stack:'S' } }
+    }
+  });
 }).catch(e => {
   document.body.insertAdjacentHTML('beforeend', `<div style="color:#dc2626;padding:20px">failed to load data: ${e}</div>`);
 });
