@@ -108,9 +108,8 @@
   <div class="sub">The analytics edition · five years of news, one warehouse</div>
 </div>
 
-<nav class="nav">
-  <a href="#" class="on">Front</a><a href="#volume">Volume</a><a href="#length">Length</a><a href="#authors">Authors</a><a href="#outlets">Outlets</a><a href="#ask">Ask the data</a>
-</nav>
+<!-- TRENDS TICKER (replaces the old nav bar) -->
+<div class="ticker-band" id="trends-ticker"><div class="ticker-track" id="trends-track"></div></div>
 
 <main>
   <div class="page">
@@ -137,8 +136,9 @@
       <div class="story" id="words">
         <div class="kicker">Word count · over time</div>
         <h3>How long is the average article?</h3>
+        <div class="pills" id="pills-words"></div>
         <div class="wrap med"><canvas id="words-over-time"></canvas></div>
-        <p class="footnote" style="margin-top:6px">Mean words per article, archive word counts (GDELT <code>wc:</code>), live-news pages excluded. Same date filter as the volume chart.</p>
+        <p class="footnote" style="margin-top:6px">Mean words per article, archive word counts (GDELT <code>wc:</code>), live-news pages excluded. Filtered independently of the volume panel.</p>
       </div>
     </div>
 
@@ -148,8 +148,8 @@
         <div class="kicker">Volume · five-year history</div>
         <h3>The shape of the archive.</h3>
         <p id="peak-line">–</p>
-        <div class="pills" id="pills"></div>
-        <p class="pills-note">This filter drives the volume, word-count, authors, and outlets panels.</p>
+        <div class="pills" id="pills-vol"></div>
+        <p class="pills-note">This panel's own date filter; every panel filters independently.</p>
         <div class="wrap tall"><canvas id="history-volume"></canvas></div>
         <p style="margin-top:8px" class="footnote">GDELT GKG backfill, Oct 2021 → present. Binned automatically: daily for short ranges, weekly or monthly for long ones. National Review is not in GDELT's archive; its history begins with the forward feed.</p>
       </div>
@@ -169,6 +169,7 @@
       <div class="story" id="authors">
         <div class="kicker">Authors · most prolific</div>
         <h3>The bylines publishing the most.</h3>
+        <div class="pills" id="pills-authors"></div>
         <div class="wrap auto"><canvas id="leaderboard"></canvas></div>
         <p class="footnote" style="margin-top:6px">Article counts within the selected window, desk and pseudo-bylines excluded. Ranked by total over the full archive.</p>
       </div>
@@ -177,6 +178,7 @@
 
       <div class="story" id="outlets">
         <div class="kicker">Outlets · by volume</div>
+        <div class="pills" id="pills-outlets"></div>
         <div class="scroll">
           <table>
             <thead><tr><th>OUTLET</th><th class="num">ARTICLES</th></tr></thead>
@@ -190,9 +192,6 @@
       <p class="footnote">Two word-count sources, never blended: forward rows are trafilatura word tokens; archive rows use GDELT's <code>wc:</code> field. Live-news posts count toward volume but never toward length metrics.</p>
     </div>
   </div>
-
-  <!-- TRENDS TICKER -->
-  <div class="ticker-band" id="trends-ticker"><div class="ticker-track" id="trends-track"></div></div>
 
   <!-- CHAT -->
   <div class="chat-section" id="ask">
@@ -256,10 +255,24 @@ function hbar(canvas, labels, data, color, opts) {
   });
 }
 
-// --- shared date-filter state ---
+// --- per-panel date filters: each visualization scopes its own range ---
 const RANGES = { '7d':7, '90d':90, '1y':365, '5y':1e9 };
-let RANGE = '5y';
 let charts = { vol:null, words:null, authors:null };
+
+function makePills(containerId, initial, onChange) {
+  const el = document.getElementById(containerId);
+  let range = initial;
+  Object.keys(RANGES).forEach(k => {
+    const b = document.createElement('button'); b.textContent = k; if (k === initial) b.className = 'on';
+    b.onclick = () => {
+      range = k;
+      el.querySelectorAll('button').forEach(x => x.classList.remove('on'));
+      b.classList.add('on');
+      onChange(k);
+    };
+    el.appendChild(b);
+  });
+}
 
 // adaptive bucketing: daily up to ~100 points, weekly to ~400, monthly beyond
 function bucketize(days, values) {
@@ -294,18 +307,12 @@ function sliceLast(days, values, n) {
   return [days.slice(start), values.slice(start)];
 }
 
-// --- data load: everything the pills drive ---
+// --- data load: everything the panels need ---
 let HIST = null, AV = null, OD = null;
-const pillsEl = document.getElementById('pills');
-Object.keys(RANGES).forEach(k => {
-  const b = document.createElement('button'); b.textContent = k; if (k === '5y') b.className = 'on';
-  b.onclick = () => { RANGE = k; pillsEl.querySelectorAll('button').forEach(x => x.classList.remove('on')); b.classList.add('on'); renderAll(); };
-  pillsEl.appendChild(b);
-});
 
 function renderVolume() {
   if (!HIST) return;
-  const [d, v] = sliceLast(HIST.days, HIST.articles, RANGES[RANGE]);
+  const [d, v] = sliceLast(HIST.days, HIST.articles, RANGES[volRange]);
   const b = bucketize(d, v);
   const cv = document.getElementById('history-volume');
   if (charts.vol) charts.vol.destroy();
@@ -318,7 +325,7 @@ function renderVolume() {
 
 function renderWords() {
   if (!HIST) return;
-  const [d] = sliceLast(HIST.days, HIST.articles, RANGES[RANGE]);
+  const [d] = sliceLast(HIST.days, HIST.articles, RANGES[wordRange]);
   const start = HIST.days.length - d.length;
   const worded = HIST.articles_worded.slice(start), words = HIST.words.slice(start);
   const pairs = d.map((day, i) => [day, worded[i], words[i]]);
@@ -340,7 +347,7 @@ function renderWords() {
 function renderAuthors() {
   if (!AV) return;
   const sums = {};
-  const start = Math.max(0, AV.days.length - RANGES[RANGE]);
+  const start = Math.max(0, AV.days.length - RANGES[authRange]);
   const idx = new Set(AV.days.slice(start).map((d, i) => start + i));
   for (const [label, series] of Object.entries(AV.authors)) {
     let t = 0; series.forEach((v, i) => { if (idx.has(i)) t += v; });
@@ -354,7 +361,7 @@ function renderAuthors() {
 
 function renderOutlets() {
   if (!OD) return;
-  const start = Math.max(0, OD.days.length - RANGES[RANGE]);
+  const start = Math.max(0, OD.days.length - RANGES[outRange]);
   const idx = new Set(OD.days.slice(start).map((d, i) => start + i));
   const sums = {};
   for (const [label, series] of Object.entries(OD.outlets)) {
@@ -368,9 +375,15 @@ function renderOutlets() {
 
 function renderAll() { renderVolume(); renderWords(); renderAuthors(); renderOutlets(); }
 
+let volRange = '5y', wordRange = '5y', authRange = '5y', outRange = '5y';
+makePills('pills-vol', '5y', k => { volRange = k; renderVolume(); });
+makePills('pills-words', '5y', k => { wordRange = k; renderWords(); });
+makePills('pills-authors', '5y', k => { authRange = k; renderAuthors(); });
+makePills('pills-outlets', '5y', k => { outRange = k; renderOutlets(); });
+
 Promise.all([j('history'), j('author_volume'), j('outlet_daily')]).then(([h, av, od]) => {
   HIST = h; AV = av; OD = od;
-  renderAll();
+  renderVolume(); renderWords(); renderAuthors(); renderOutlets();
 }).catch(e => console.error('filter data failed', e));
 
 // --- static panels ---
