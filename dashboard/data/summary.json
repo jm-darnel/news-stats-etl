@@ -5,11 +5,11 @@
   "authors": 43518,
   "outlets": 22,
   "health": {
-    "status": "warn",
+    "status": "ok",
     "last_run_at": "2026-10-15 17:54:57.907741",
-    "age_hours": 1.2,
+    "age_hours": 2.0,
     "rows_last_run": 125355,
-    "rows_flagged": 7423,
+    "rows_flagged": 0,
     "dq_checks_failed": 0,
     "sources": 22,
     "total_articles": 2824165

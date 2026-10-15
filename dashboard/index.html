@@ -134,8 +134,12 @@
 
       <div class="rule"></div>
 
-      <div class="kicker">Trends</div>
-      <div id="trends"></div>
+      <div class="story" id="words">
+        <div class="kicker">Word count · over time</div>
+        <h3>How long is the average article?</h3>
+        <div class="wrap med"><canvas id="words-over-time"></canvas></div>
+        <p class="footnote" style="margin-top:6px">Mean words per article, archive word counts (GDELT <code>wc:</code>), live-news pages excluded. Same date filter as the volume chart.</p>
+      </div>
     </div>
 
     <!-- COLUMN 2 -->
@@ -148,15 +152,6 @@
         <p class="pills-note">This filter drives the volume, word-count, authors, and outlets panels.</p>
         <div class="wrap tall"><canvas id="history-volume"></canvas></div>
         <p style="margin-top:8px" class="footnote">GDELT GKG backfill, Oct 2021 → present. Binned automatically: daily for short ranges, weekly or monthly for long ones. National Review is not in GDELT's archive; its history begins with the forward feed.</p>
-      </div>
-
-      <div class="rule hair"></div>
-
-      <div class="story" id="words">
-        <div class="kicker">Word count · over time</div>
-        <h3>How long is the average article?</h3>
-        <div class="wrap med"><canvas id="words-over-time"></canvas></div>
-        <p class="footnote" style="margin-top:6px">Mean words per article, archive word counts (GDELT <code>wc:</code>), live-news pages excluded. Same date filter as the volume chart.</p>
       </div>
 
       <div class="rule hair"></div>
@@ -255,7 +250,7 @@ function hbar(canvas, labels, data, color, opts) {
       plugins:{ legend:{ display:false } },
       scales:{
         x:{ grid:{ color:'#f3f3f3' }, ticks:{ color:'#999', font:{ size:10 }, maxTicksLimit:4 } },
-        y:{ grid:{ display:false }, ticks:{ color:'#333', font:{ size:10.5 } }, position:'right' }
+        y:{ grid:{ display:false }, ticks:{ color:'#333', font:{ size:10.5 } } }
       }
     }, opts||{})
   });
@@ -318,7 +313,7 @@ function renderVolume() {
   const tot = v.reduce((a, x) => a + x, 0);
   let mi = 0; v.forEach((x, i) => { if (x > v[mi]) mi = i; });
   document.getElementById('peak-line').textContent =
-    `${tot.toLocaleString()} articles in view · peak ${v[mi].toLocaleString()} on ${fmtDay(d[mi])}`;
+    `${tot.toLocaleString()} articles in view · peak day ${v[mi].toLocaleString()} on ${fmtDay(d[mi])}`;
 }
 
 function renderWords() {
@@ -393,15 +388,8 @@ Promise.all([j('summary'), j('length_median')]).then(([summary, lm]) => {
     `<span><span class="dot" style="background:${tone}"></span>ETL ${h.status||'—'}</span>` +
     `<span>${h.age_hours!=null ? h.age_hours+'h ago' : ''} · ${h.sources||summary.outlets} sources</span>`;
 
-  // trends figures (left column)
+  // trends figures live only in the moving ticker above Ask the Data
   const tr = summary.trends || {};
-  const blurb = (w, x) => {
-    const d = x.volume_pct_change;
-    const dir = d==null ? '' : (d>=0 ? `up ${d}%` : `down ${Math.abs(d)}%`);
-    return `<div class="fig"><span>${w}d</span><b style="font-weight:400">${x.articles.toLocaleString()} articles${dir?', '+dir:''}</b></div>`;
-  };
-  document.getElementById('trends').innerHTML =
-    ['7','30','90'].map(w => tr[w] ? blurb(w, tr[w]) : '').join('');
 
   // Bloomberg-style moving ticker above Ask the Data
   const tri = (d) => d == null ? '<span class="tri" style="color:#767676">—</span>'
@@ -432,9 +420,8 @@ Promise.all([j('summary'), j('length_median')]).then(([summary, lm]) => {
       plugins:{ legend:{ display:true, position:'top', labels:{ boxWidth:10, font:{ size:10 }, color:'#767676' } } },
       scales:{
         x:{ grid:{ color:'#f3f3f3' }, ticks:{ color:'#999', font:{ size:10 }, maxTicksLimit:5 } },
-        y:{ grid:{ display:false }, ticks:{ color:'#333', font:{ size:10.5 } }, position:'right', stacked:false },
-      },
-      datasets:{ bar:{ stack:'S' } }
+        y:{ grid:{ display:false }, ticks:{ color:'#333', font:{ size:10.5 } } },
+      }
     }
   });
 }).catch(e => {
