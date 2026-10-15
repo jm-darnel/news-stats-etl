@@ -126,38 +126,53 @@ def _history(conn) -> dict:
     }
 
 
-def _author_volume(conn, top: int = 15) -> dict:
-    """Daily article counts for the most prolific authors (pseudo-authors excluded).
+def _author_volume(conn, per_outlet: int = 10) -> dict:
+    """Daily article counts for the most prolific authors, pseudo-authors excluded.
 
-    Ranked by total article volume over the full archive window; the dashboard
-    re-ranks inside whatever date range the visitor filters to.
+    Ranking is per outlet (top N authors by total volume in each), not global:
+    a global top-N is dominated by high-volume outlets and would make the
+    dashboard's outlet multi-select useless.
     """
-    rows = conn.execute(
+    top = conn.execute(
         """
         WITH per AS (
-            SELECT au.author_id, au.canonical_name, au.outlet_id,
-                   CAST(a.published_at AS DATE) AS d, count(*) AS n
+            SELECT au.author_id, au.canonical_name, au.outlet_id, o.name AS outlet_name,
+                   count(*) AS total
             FROM author au
             JOIN article_author aa ON aa.author_id = au.author_id
             JOIN article a ON a.article_id = aa.article_id
+            JOIN outlet o ON o.outlet_id = au.outlet_id
             WHERE coalesce(au.is_pseudo, FALSE) = FALSE
               AND a.content_type = 'article' AND a.published_at IS NOT NULL
-            GROUP BY 1, 2, 3, 4),
-        tot AS (
-            SELECT author_id, sum(n) AS t FROM per GROUP BY 1 ORDER BY t DESC LIMIT ?
+            GROUP BY 1, 2, 3, 4
+        ), ranked AS (
+            SELECT author_id, canonical_name, outlet_id, outlet_name, total,
+                   row_number() OVER (PARTITION BY outlet_id ORDER BY total DESC) AS rk
+            FROM per
         )
-        SELECT p.d, p.canonical_name || ' · ' || o.name AS label, p.n
-        FROM per p JOIN tot USING (author_id)
-        JOIN outlet o ON o.outlet_id = p.outlet_id
-        ORDER BY p.d
+        SELECT author_id, canonical_name, outlet_name, outlet_id FROM ranked WHERE rk <= ?
         """,
-        [top],
+        [per_outlet],
     ).fetchall()
-    days = sorted({r[0] for r in rows})
+    keep = {(r[0], r[3]) for r in top}
+    labels = {r[0]: f"{r[1]} · {r[2]}" for r in top}
+    daily = conn.execute(
+        """
+        SELECT au.author_id, au.outlet_id, CAST(a.published_at AS DATE) AS d, count(*) AS n
+        FROM author au
+        JOIN article_author aa ON aa.author_id = au.author_id
+        JOIN article a ON a.article_id = aa.article_id
+        WHERE coalesce(au.is_pseudo, FALSE) = FALSE
+          AND a.content_type = 'article' AND a.published_at IS NOT NULL
+        GROUP BY 1, 2, 3
+        """
+    ).fetchall()
+    filtered = [(a, o, d, n) for a, o, d, n in daily if (a, o) in keep]
+    days = sorted({r[2] for r in filtered})
     day_idx = {d: i for i, d in enumerate(days)}
     authors: dict[str, list[int]] = {}
-    for d, label, n in rows:
-        series = authors.setdefault(label, [0] * len(days))
+    for a, _o, d, n in filtered:
+        series = authors.setdefault(labels[a], [0] * len(days))
         series[day_idx[d]] = n
     return {
         "days": [str(d) for d in days],

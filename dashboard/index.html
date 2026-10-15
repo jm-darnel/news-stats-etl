@@ -66,13 +66,15 @@
   .pills button.on { background:var(--ink); border-color:var(--ink); color:#fff; font-weight:600; }
   .pills-note { font-size:10.5px; color:var(--muted); margin-top:4px; }
 
+  select.multi { width:100%; margin:4px 0 6px; font-family:inherit; font-size:11px; color:var(--body);
+                 border:1px solid var(--rule); border-radius:3px; padding:3px; background:#fff; }
+
   .footnote { font-size:11px; color:var(--muted); line-height:1.6; }
 
   /* trends ticker */
   .ticker-band { border-top:2px solid var(--ink); border-bottom:2px solid var(--ink); margin-top:26px;
                  overflow:hidden; white-space:nowrap; background:#fff; }
   .ticker-track { display:inline-flex; align-items:center; padding:7px 0; animation:tick 45s linear infinite; }
-  .ticker-band:hover .ticker-track { animation-play-state:paused; }
   @keyframes tick { from { transform:translateX(0); } to { transform:translateX(-50%); } }
   .tk { display:inline-flex; align-items:baseline; gap:6px; padding:0 26px; font-size:12.5px; letter-spacing:.3px; }
   .tk .lbl { font-size:10px; font-weight:600; letter-spacing:1px; color:var(--muted); text-transform:uppercase; }
@@ -170,8 +172,9 @@
         <div class="kicker">Authors · most prolific</div>
         <h3>The bylines publishing the most.</h3>
         <div class="pills" id="pills-authors"></div>
+        <select id="author-outlets" class="multi" multiple title="Outlets to include (multi-select)"></select>
         <div class="wrap auto"><canvas id="leaderboard"></canvas></div>
-        <p class="footnote" style="margin-top:6px">Article counts within the selected window, desk and pseudo-bylines excluded. Ranked by total over the full archive.</p>
+        <p class="footnote" style="margin-top:6px">Article counts within this panel's window, desk and pseudo-bylines excluded. Hold Cmd/Ctrl (or tap) in the outlet list to combine outlets.</p>
       </div>
 
       <div class="rule double"></div>
@@ -256,7 +259,7 @@ function hbar(canvas, labels, data, color, opts) {
 }
 
 // --- per-panel date filters: each visualization scopes its own range ---
-const RANGES = { '7d':7, '90d':90, '1y':365, '5y':1e9 };
+const RANGES = { '7d':7, '30d':30, '90d':90, '1y':365, '5y':1e9 };
 let charts = { vol:null, words:null, authors:null };
 
 function makePills(containerId, initial, onChange) {
@@ -282,7 +285,7 @@ function bucketize(days, values) {
   if (mode === 'day') return { labels: days.map(fmtDay), values };
   const acc = {}; const order = [];
   days.forEach((d, i) => {
-    const k = mode === 'month' ? d.slice(0, 7) : weekStart(d);
+    const k = mode === 'month' ? d.slice(0, 7) : mode === 'week' ? weekStart(d) : d;
     if (!(k in acc)) { acc[k] = [0, 0]; order.push(k); }
     acc[k][0] += (values[i] || 0); acc[k][1]++;
   });
@@ -325,31 +328,37 @@ function renderVolume() {
 
 function renderWords() {
   if (!HIST) return;
+  // weighted average: words / worded-articles per bucket (NOT the inverse)
   const [d] = sliceLast(HIST.days, HIST.articles, RANGES[wordRange]);
   const start = HIST.days.length - d.length;
   const worded = HIST.articles_worded.slice(start), words = HIST.words.slice(start);
-  const pairs = d.map((day, i) => [day, worded[i], words[i]]);
-  const n = pairs.length;
+  const n = d.length;
   let mode = 'day';
   if (n > 400) mode = 'month'; else if (n > 100) mode = 'week';
   const acc = {}; const order = [];
-  pairs.forEach(([day, w, ws]) => {
-    const k = mode === 'month' ? day.slice(0, 7) : weekStart(day);
-    if (!(k in acc)) { acc[k] = [0, 0]; order.push(k); }
-    acc[k][0] += w || 0; acc[k][1] += ws || 0;
-  });
+  for (let i = 0; i < n; i++) {
+    const k = mode === 'month' ? d[i].slice(0, 7) : mode === 'week' ? weekStart(d[i]) : d[i];
+    if (!(k in acc)) { acc[k] = { words: 0, articles: 0 }; order.push(k); }
+    acc[k].words += words[i] || 0;
+    acc[k].articles += worded[i] || 0;
+  }
   const labels = order.map(k => mode === 'month' ? fmtMonth(k) : fmtDay(k));
-  const vals = order.map(k => Math.round(acc[k][0] / acc[k][1]));
+  const vals = order.map(k => Math.round(acc[k].words / Math.max(acc[k].articles, 1)));
   if (charts.words) charts.words.destroy();
   charts.words = line(document.getElementById('words-over-time'), labels, vals, '#333', { maxTicks:9 });
 }
 
 function renderAuthors() {
   if (!AV) return;
+  // outlet multi-select: empty selection = all outlets
+  const sel = document.getElementById('author-outlets');
+  const chosen = [...sel?.selectedOptions || []].map(o => o.value).filter(v => v !== '__ALL__');
+  const outletOk = (label) => !chosen.length || chosen.includes(label.split(' · ')[1]);
   const sums = {};
   const start = Math.max(0, AV.days.length - RANGES[authRange]);
   const idx = new Set(AV.days.slice(start).map((d, i) => start + i));
   for (const [label, series] of Object.entries(AV.authors)) {
+    if (!outletOk(label)) continue;
     let t = 0; series.forEach((v, i) => { if (idx.has(i)) t += v; });
     sums[label] = t;
   }
@@ -375,14 +384,22 @@ function renderOutlets() {
 
 function renderAll() { renderVolume(); renderWords(); renderAuthors(); renderOutlets(); }
 
-let volRange = '5y', wordRange = '5y', authRange = '5y', outRange = '5y';
-makePills('pills-vol', '5y', k => { volRange = k; renderVolume(); });
-makePills('pills-words', '5y', k => { wordRange = k; renderWords(); });
-makePills('pills-authors', '5y', k => { authRange = k; renderAuthors(); });
-makePills('pills-outlets', '5y', k => { outRange = k; renderOutlets(); });
+let volRange = '30d', wordRange = '30d', authRange = '30d', outRange = '30d';
+makePills('pills-vol', '30d', k => { volRange = k; renderVolume(); });
+makePills('pills-words', '30d', k => { wordRange = k; renderWords(); });
+makePills('pills-authors', '30d', k => { authRange = k; renderAuthors(); });
+makePills('pills-outlets', '30d', k => { outRange = k; renderOutlets(); });
 
 Promise.all([j('history'), j('author_volume'), j('outlet_daily')]).then(([h, av, od]) => {
   HIST = h; AV = av; OD = od;
+  // outlet multi-select for the authors panel: one option per outlet, blank = all
+  const sel = document.getElementById('author-outlets');
+  const outlets = [...new Set(Object.keys(AV.authors).map(l => l.split(' · ')[1]))].sort();
+  outlets.forEach(o => {
+    const opt = document.createElement('option'); opt.value = o; opt.textContent = o;
+    sel.appendChild(opt);
+  });
+  sel.addEventListener('change', renderAuthors);
   renderVolume(); renderWords(); renderAuthors(); renderOutlets();
 }).catch(e => console.error('filter data failed', e));
 

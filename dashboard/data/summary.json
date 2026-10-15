@@ -7,7 +7,7 @@
   "health": {
     "status": "ok",
     "last_run_at": "2026-10-15 17:54:57.907741",
-    "age_hours": 2.0,
+    "age_hours": 3.0,
     "rows_last_run": 125355,
     "rows_flagged": 0,
     "dq_checks_failed": 0,
